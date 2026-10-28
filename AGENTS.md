@@ -14,10 +14,15 @@ npm run typecheck   # tsc --noEmit, strict
 npm test            # vitest run, 23 tests
 ```
 
+## Agent docs
+
+- Read `docs/guardrails.md`; consult `docs/architecture.md`, `docs/logging.md`, and `docs/errors.md` for relevant changes.
+
 ## Layout
 
 - `src/index.ts` — plugin entry; tools, event hooks, state file I/O
-- `skills/`, `commands/` — auto-copied to `~/.config/opencode` on first run
+- `skills/` — copied to `~/.config/opencode/skills/` if absent
+- `commands/` — Markdown is packaged; active templates live in `src/commands.ts`
 - `tests/` — vitest; `tests/setup.ts` sandboxes `HOME` to a tmpdir
 - `.github/workflows/release.yml` — CI + auto-publish on master
 
