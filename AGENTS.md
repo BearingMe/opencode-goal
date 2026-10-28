@@ -11,24 +11,32 @@
 ```bash
 npm install
 npm run typecheck   # tsc --noEmit, strict
-npm test            # vitest run, 23 tests
+npm test            # vitest run
 ```
+
+## Agent docs
+
+- Read `docs/guardrails.md` and `docs/architecture.md` before structural or release changes; consult `docs/errors.md` / `docs/logging.md` when relevant.
+- `docs/checkpoints.md` records verified V2 migration evidence and operational limits; do not treat migration snapshots as runtime code.
+- Use `docs/definition-of-done.md` before marking a milestone complete.
 
 ## Layout
 
-- `src/index.ts` — plugin entry; tools, event hooks, state file I/O
-- `skills/`, `commands/` — auto-copied to `~/.config/opencode` on first run
-- `tests/` — vitest; `tests/setup.ts` sandboxes `HOME` to a tmpdir
-- `.github/workflows/release.yml` — CI + auto-publish on master
+- See `docs/architecture.md` for source-module ownership and dependency boundaries.
+- `tests/` uses Vitest; `tests/setup.ts` sandboxes `HOME` to a temp directory.
 
-## Gotchas
+## Package
 
-- Plugin tools MUST use `tool({ args: {...} })` from `@opencode-ai/plugin`. The raw JSON-Schema `parameters: {...}` form crashes opencode 1.14+ (`Object.entries(undefined)`). See #4.
-- `tool.schema` is re-exported zod. Use `tool.schema.string()` (function), not `tool.schema.string` (property).
-- `src/index.ts` runtime exports must be loader-safe. opencode 1.15+ iterates `Object.values(module)` of the entrypoint and accepts each value only if it's (a) a function, or (b) an object literally shaped `{ server: <function> }`. Anything else — RegExps, strings, numbers, Sets, plain objects, classes — throws `TypeError: Plugin export is not a function`. Put non-function values in sibling modules (`src/completion.ts`) and import them without re-exporting. Type-only `export type` is fine; types are erased at compile time. See #14 / #15.
-- No build step. Ships `src/*.ts` directly via `"main": "src/index.ts"`.
-- `engines.node: >=18` is the runtime contract. Tests need Node 20+ (vitest 4 imports `node:util.styleText`).
+- V2-only source; minimum OpenCode 2.1.4 and pinned `@opencode/plugin` 2.1.4.
+- No build step; `package.json` exports `src/index.ts` and packages `src/` plus `skills/`.
+- Runtime requires Node 18+; tests require Node 20+.
+- The npm registry's 1.0.10 artifact is still V1; verify a V2 release exists before recommending package-name installation.
+
+## Runtime limits
+
+- State locks and request tracking are process-local; use one OpenCode runtime per project.
+- State is project-local at `.opencode/ralph-loop.local.md`; keep task content out of Git.
 
 ## Releases
 
-Bump `version` in `package.json` → merge to master → workflow auto-publishes via OIDC trusted publishing with provenance, tags, and creates the GitHub release. Details at top of `.github/workflows/release.yml`.
+The inherited master workflow can publish/tag when the package version exceeds npm's latest. This fork's remote and package metadata differ; verify the target and get explicit approval before version, release, publish, or push changes. See `docs/guardrails.md` and `.github/workflows/release.yml`.

@@ -1,41 +1,41 @@
 # Contributing
 
-## Setup
+## Runtime contract
+
+- This source is V2-only: OpenCode 2.1.4+ with `@opencode/plugin` 2.1.4; Node.js 18+ at runtime.
+- The npm registry's `opencode-ralph-loop@1.0.10` is still the inherited V1 artifact. This fork has not published the V2 port; use the local tarball/wrapper flow in [README](README.md) for runtime checks.
+- The package ships TypeScript source directly through `package.json` exports; there is no build step.
+
+## Setup and checks
 
 ```bash
-git clone https://github.com/charfeng1/opencode-ralph-loop
-cd opencode-ralph-loop
+git clone https://github.com/BearingMe/opencode-goal
+cd opencode-goal
 npm install
-```
-
-No build step. Plugin ships TypeScript source directly.
-
-## Local checks
-
-```bash
 npm run typecheck
 npm test
 ```
 
-CI runs the same on every PR (Node 20/22).
+Tests require Node.js 20+. CI runs typecheck and tests on Node.js 20 and 22.
 
 ## Layout
 
-- `src/index.ts` — plugin entry
-- `skills/`, `commands/` — auto-copied to `~/.config/opencode` on first run
-- `tests/` — vitest unit + smoke tests
-- `.github/workflows/release.yml` — CI + auto-publish
+- `src/` — V2 plugin entry, registration adapters, loop state machine, and project-local state.
+- `skills/` — packaged skill sources registered by the plugin; they are not copied globally.
+- `tests/` — Vitest suite; `tests/setup.ts` isolates HOME.
+- `docs/architecture.md` — module ownership and dependency boundaries.
+- `.github/workflows/release.yml` — CI and inherited conditional release workflow.
 
-## PRs
+## Pull requests
 
-- Branch off `master`, one concern per PR
-- Add a test if you touch tool registration, state parsing, or completion detection
-- Match existing style — minimal, no needless abstraction
-- No new deps without a strong reason
+- Branch from `master`; keep each PR focused.
+- Add or update tests for tool/command registration, state, events, completion, and failure behavior.
+- Do not change package identity, version, remotes, or release configuration without maintainer approval. A higher version pushed to `master` can trigger the inherited publish/tag workflow.
+- Match the existing style; do not add dependencies without a concrete need.
 
 ## Bug reports
 
-Include opencode version, OS, repro steps, and relevant logs.
+Include OpenCode version, OS, reproduction steps, and relevant logs. Redact prompts, secrets, and credentials.
 
 ## License
 
