@@ -1,5 +1,6 @@
 import { Plugin } from "@opencode/plugin";
 import { registerCommands } from "./commands.ts";
+import { subscribeLoopEvents } from "./events.ts";
 import { registerSkills } from "./skills.ts";
 import { registerTools } from "./tools.ts";
 
@@ -9,5 +10,6 @@ export default Plugin.define({
     await registerTools(ctx);
     await registerCommands(ctx);
     await registerSkills(ctx);
+    return subscribeLoopEvents(ctx);
   },
 });

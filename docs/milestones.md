@@ -114,14 +114,14 @@ Convert the current OpenCode V1 Ralph Loop plugin to V2 while preserving its use
 
 **Phases (epics)**
 
-1. **Event subscription:** use the V2 event API and subscribe only to required event types.
+1. **Event subscription:** use the V2 event API and process only the required event types supported by the pinned SDK.
 2. **Ownership and cleanup:** validate event/session/project scope and abort the subscription on plugin cleanup.
 
 **Acceptance criteria**
 
-- [ ] The selected V2 event names and payloads typecheck against the pinned SDK.
-- [ ] Events from unrelated sessions/projects cannot mutate this loop's state.
-- [ ] Unloading/reloading the plugin closes the event subscription without unhandled rejections.
+- [x] `session.idle` and `session.deleted` payloads typecheck against the pinned SDK; unsupported server-side type filtering is replaced by local type narrowing.
+- [x] Events from unrelated sessions/projects cannot mutate this loop's state.
+- [x] Plugin cleanup aborts the subscription and handles abort rejection without an unhandled error.
 
 ### M7 — Port completion and continuation behavior
 

@@ -2,7 +2,7 @@
 
 Checkpoints record verified progress and the next useful place to resume. Milestone acceptance criteria in [`milestones.md`](milestones.md) remain the completion authority; do not mark a checkpoint complete from intention alone.
 
-**Snapshot:** 2026-10-28. M0–M5 are complete and committed. M6–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
+**Snapshot:** 2026-10-28. M0–M5 are complete and committed. M6 implementation and checks are verified; adversary review/commit closeout is pending. M7–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
 
 ## M0 — Confirm the V2 compatibility contract
 
@@ -108,16 +108,21 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 
 **Decisions**
 - Event processing must be scoped to the active loop's session/project and subscription cleanup must follow plugin lifecycle.
+- In pinned `@opencode/plugin` 2.1.4, `ctx.event.subscribe` accepts `signal` but no `types` filter. Subscribe with the supported signal and locally narrow to `session.idle` / `session.deleted`.
+- Both events carry `data.sessionID`; their project `location` is optional. Use the event location when present, otherwise resolve through `ctx.session.get`; never fall back to plugin `ctx.location`.
+- Only invoke idle handling for active state in that project whose `sessionId` matches; allow unbound legacy state for M0's first-idle binding. A delete event clears only active state bound to that exact session.
+- Plugin cleanup aborts the subscription and awaits its consumer; abort-related stream rejection is treated as shutdown.
 
 **Issues**
-- Current `session.deleted` handling clears state without checking the deleted session.
-- V2 event names and payloads must be checked against the pinned SDK.
+- Idle continuation behavior remains for M7; M6 only scopes and dispatches eligible idle events.
+- If a delete event omits `location` and `ctx.session.get` can no longer resolve the deleted session, report the failure and leave state untouched rather than guessing a project. Tests cover successful lookup fallback; this post-delete API behavior is not runtime-verified.
 
 **Thoughts**
-- Treat plugin load location and event/session location as distinct until the event contract proves otherwise.
+- Tests cover unrelated project/session events, optional event location, unbound legacy idle state, entrypoint cleanup, and abort rejection.
+- `npm run typecheck` and all 57 tests pass. Event names/payloads were checked against `@opencode/schema` and the event API against pinned `@opencode/plugin` 2.1.4 types.
 
 **Current state**
-- No V2 event subscription or cleanup implementation yet. Depends on M1.
+- M6 implementation and checks are verified; adversary review and commit closeout are pending. Depends on M1.
 
 ## M7 — Port completion and continuation behavior
 
@@ -132,7 +137,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Prevent duplicate continuation admission and do not retry unless duplicate submission is prevented.
 
 **Current state**
-- No V2 session API, completion, or continuation changes. Blocked on M5 and M6.
+- No V2 completion or continuation logic yet. M6 uses `ctx.session.get` only as the fallback for events without `location`; M7 starts after M6 review/commit closeout.
 
 ## M8 — Verify the V2 package
 

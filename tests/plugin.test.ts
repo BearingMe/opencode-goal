@@ -19,6 +19,7 @@ async function getTools(
   sessionDirectories: Record<string, string> = {},
 ) {
   const tools = new Map<string, RegisteredTool>();
+  let eventSignal: AbortSignal | undefined;
   const context = {
     location: { directory },
     session: {
@@ -41,16 +42,31 @@ async function getTools(
       list: async () => ({ data: [] }),
       transform: async () => undefined,
     },
+    event: {
+      subscribe: ({ signal }: { signal: AbortSignal }) => {
+        eventSignal = signal;
+        return (async function* () {})();
+      },
+    },
   } as unknown as OpenCodePlugin.Context;
 
-  await RalphLoopPlugin.setup(context);
-  return { directory, tools };
+  const cleanup = await RalphLoopPlugin.setup(context);
+  return { directory, tools, cleanup, get eventSignal() { return eventSignal; } };
 }
 
 describe("RalphLoopPlugin", () => {
   it("exports a V2 plugin definition with a stable ID", () => {
     expect(RalphLoopPlugin.id).toBe("opencode-ralph-loop");
     expect(typeof RalphLoopPlugin.setup).toBe("function");
+  });
+
+  it("returns cleanup that aborts the V2 event subscription", async () => {
+    const { cleanup, eventSignal } = await getTools();
+
+    expect(typeof cleanup).toBe("function");
+    expect(eventSignal?.aborted).toBe(false);
+    await cleanup?.();
+    expect(eventSignal?.aborted).toBe(true);
   });
 
   it("registers each V2 tool once with object schemas", async () => {
