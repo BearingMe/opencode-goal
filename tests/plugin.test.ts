@@ -37,6 +37,10 @@ async function getTools(
       list: async () => ({ data: [] }),
       transform: async () => undefined,
     },
+    skill: {
+      list: async () => ({ data: [] }),
+      transform: async () => undefined,
+    },
   } as unknown as OpenCodePlugin.Context;
 
   await RalphLoopPlugin.setup(context);

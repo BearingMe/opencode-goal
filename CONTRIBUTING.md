@@ -21,8 +21,9 @@ CI runs the same on every PR (Node 20/22).
 
 ## Layout
 
-- `src/index.ts` — plugin entry
-- `skills/`, `commands/` — auto-copied to `~/.config/opencode` on first run
+- `src/index.ts` — V2 plugin entry
+- `src/commands.ts`, `src/tools.ts`, `src/skills.ts` — V2 command, tool, and skill registration
+- `skills/` — packaged skill files registered by the plugin; not copied globally
 - `tests/` — vitest unit + smoke tests
 - `.github/workflows/release.yml` — CI + auto-publish
 

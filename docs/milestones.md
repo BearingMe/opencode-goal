@@ -88,9 +88,9 @@ Convert the current OpenCode V1 Ralph Loop plugin to V2 while preserving its use
 
 **Acceptance criteria**
 
-- [ ] All packaged skills are discoverable on a clean V2 install.
-- [ ] Registration checks `ctx.skill.list()` and skips existing IDs, preserving user-owned skills.
-- [ ] The `setupSkills()` copy behavior and packaged layout match the chosen approach.
+- [x] All packaged skills are discoverable on a clean V2 install.
+- [x] Registration checks `ctx.skill.list()` and skips existing IDs, preserving user-owned skills.
+- [x] The V1 `setupSkills()` copy is removed; the package includes the skill assets, and the plugin registers them without global filesystem writes.
 
 ### M5 — Preserve project-local loop state
 

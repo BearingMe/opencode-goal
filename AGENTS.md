@@ -11,32 +11,33 @@
 ```bash
 npm install
 npm run typecheck   # tsc --noEmit, strict
-npm test            # vitest run, 23 tests
+npm test            # vitest run
 ```
 
 ## Agent docs
 
-- Runtime remains V1; treat V2 references as migration guidance until the port is implemented.
-- Read `docs/guardrails.md`; consult `docs/architecture.md`, `docs/logging.md`, and `docs/errors.md` for relevant changes.
+- Runtime is an incremental OpenCode V2 port; check `docs/checkpoints.md` before assuming loop-event and continuation behavior is complete.
+- Read `docs/guardrails.md`; treat `docs/architecture.md` as the V1 baseline until M9 updates it, and consult `docs/logging.md` / `docs/errors.md` for relevant changes.
 - Follow `docs/milestones.md` for the V2 conversion sequence.
 - Update `docs/checkpoints.md` at phase boundaries and handoffs; record verified state only.
 - Use `docs/definiotion-of-done.md` before marking a milestone complete.
 
 ## Layout
 
-- `src/index.ts` — plugin entry; tools, event hooks, state file I/O
-- `skills/` — copied to `~/.config/opencode/skills/` if absent
-- `commands/` — Markdown is packaged; active templates live in `src/commands.ts`
+- `src/index.ts` — V2 plugin entry; registrations live in sibling modules
+- `src/commands.ts`, `src/tools.ts`, `src/skills.ts` — V2 command, tool, and skill registration
+- `src/state.ts` — project-local state parsing and I/O; `skills/` contains packaged skill files, never copied globally
 - `tests/` — vitest; `tests/setup.ts` sandboxes `HOME` to a tmpdir
 - `.github/workflows/release.yml` — CI + auto-publish on master
 
-## Current V1 runtime gotchas
+## Package
 
-- Plugin tools MUST use `tool({ args: {...} })` from `@opencode-ai/plugin`. The raw JSON-Schema `parameters: {...}` form crashes opencode 1.14+ (`Object.entries(undefined)`). See #4.
-- `tool.schema` is re-exported zod. Use `tool.schema.string()` (function), not `tool.schema.string` (property).
-- `src/index.ts` runtime exports must be loader-safe. opencode 1.15+ iterates `Object.values(module)` of the entrypoint and accepts each value only if it's (a) a function, or (b) an object literally shaped `{ server: <function> }`. Anything else — RegExps, strings, numbers, Sets, plain objects, classes — throws `TypeError: Plugin export is not a function`. Put non-function values in sibling modules (`src/completion.ts`) and import them without re-exporting. Type-only `export type` is fine; types are erased at compile time. See #14 / #15.
-- No build step. Ships `src/*.ts` directly via `"main": "src/index.ts"`.
-- `engines.node: >=18` is the runtime contract. Tests need Node 20+ (vitest 4 imports `node:util.styleText`).
+- No build step; ships `src/*.ts` directly via `"main": "src/index.ts"`.
+- Runtime requires Node 18+; tests require Node 20+ (Vitest 4 imports `node:util.styleText`).
+
+## Legacy V1 migration notes
+
+- These V1 API/loader constraints describe the previous runtime; verify V2 behavior against the pinned SDK and official V2 docs instead of carrying them forward.
 
 ## Releases
 

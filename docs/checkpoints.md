@@ -2,7 +2,7 @@
 
 Checkpoints record verified progress and the next useful place to resume. Milestone acceptance criteria in [`milestones.md`](milestones.md) remain the completion authority; do not mark a checkpoint complete from intention alone.
 
-**Snapshot:** 2026-10-28. M0–M3 are complete and committed. M4–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
+**Snapshot:** 2026-10-28. M0–M3 are complete and committed. M4 implementation and checks are verified; adversary review/commit closeout is pending. M5–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
 
 ## M0 — Confirm the V2 compatibility contract
 
@@ -74,16 +74,19 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 ## M4 — Port skill discovery
 
 **Decisions**
-- Register packaged skills with `ctx.skill.transform`; check `ctx.skill.list()` and skip existing IDs.
+- Register packaged `skills/<id>/SKILL.md` files with `ctx.skill.transform`; resolve files relative to `src/skills.ts`, parse their frontmatter, and submit the absolute path plus body as `Skill.Info`.
+- Check `ctx.skill.list()` and skip existing IDs. Do not copy skill files to a global directory.
 
 **Issues**
-- Packaged `skills/` are not yet registered by the V2 entrypoint; the V1 global-copy behavior was removed.
+- None identified in M4 scope.
 
 **Thoughts**
-- Test clean install, duplicate IDs, and Windows paths; do not copy skills globally.
+- Tests cover all three packaged skill IDs and bodies, absolute Windows paths, and preserving an existing user-owned skill.
+- OpenCode 2.1.4 smoke installed the packed package in a fresh project; `ctx.skill.list()` had none of the Ralph IDs before setup and all three after setup, with package-local `SKILL.md` paths. The expected invalid-model error happened after setup.
+- Updated `AGENTS.md` and `CONTRIBUTING.md` layout claims; the broader README/architecture V2 documentation pass remains M9.
 
 **Current state**
-- No V2 skill registration/discovery changes. Depends on M1.
+- M4 checks pass (41 tests); adversary review and commit closeout are pending. Depends on M3.
 
 ## M5 — Preserve project-local loop state
 
