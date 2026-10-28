@@ -2,7 +2,7 @@
 
 Checkpoints record verified progress and the next useful place to resume. Milestone acceptance criteria in [`milestones.md`](milestones.md) remain the completion authority; do not mark a checkpoint complete from intention alone.
 
-**Snapshot:** 2026-10-28. M0 and M1 are complete and committed. M2 implementation and checks are verified; adversary review/commit closeout is pending. M3–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
+**Snapshot:** 2026-10-28. M0–M2 are complete and committed. M3–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
 
 ## M0 — Confirm the V2 compatibility contract
 
@@ -51,7 +51,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Tests exercise the V2 registration callback with a fake editor, including a session directory different from the plugin location; start and cancel both operate in the session's project. Final installed-package behavior is covered in M8.
 
 **Current state**
-- M2 acceptance tests pass (33 total); adversary review and commit closeout are pending.
+- M2 is complete in commit `a9b531b`; `npm run typecheck` and all 33 tests pass. Adversary review passed, including the session-versus-plugin location regression.
 
 ## M3 — Port slash commands
 
@@ -88,13 +88,13 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Keep `.opencode/ralph-loop.local.md` and its existing fields as the compatibility target; plugin storage is not approved as a replacement.
 
 **Issues**
-- State read/write/clear helpers currently swallow I/O errors; writes can fail while tools still report success.
+- `readState` treats `ENOENT` as missing state and propagates other read failures; write failures propagate, and clearing an absent file is idempotent. Malformed content currently falls back to defaults, and injected failure/tool-result tests remain.
 
 **Thoughts**
-- Implement the explicit failure distinctions and tests in `errors.md`; preserve CRLF parsing.
+- Existing tests already cover parser/serializer round trips and CRLF parsing. Add the explicit malformed-state policy and filesystem failure tests required by `errors.md`.
 
 **Current state**
-- V1 parsing/serialization now lives in `src/state.ts`; V2 state-file I/O is not implemented. Depends on M1.
+- Parsing, serialization, and basic project-local read/write/clear I/O live in `src/state.ts`; parser/serializer round-trip and CRLF tests pass. M5 still needs malformed-state policy and injected filesystem/tool failure tests. Depends on M2.
 
 ## M6 — Subscribe to and scope V2 events
 
