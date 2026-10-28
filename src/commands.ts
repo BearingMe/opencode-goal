@@ -1,13 +1,16 @@
 import { Plugin } from "@opencode/plugin";
 import { HELP_TEXT, cancelLoop, startLoop } from "./loop.ts";
-import { DEFAULT_MAX_ITERATIONS } from "./state.ts";
+import { DEFAULT_MAX_ITERATIONS, stateStore, type StateStore } from "./state.ts";
 import { STATE_PATH } from "./state-path.ts";
 
 const LOOP_DESCRIPTION = "Start Ralph Loop and work on a task until it is complete.";
 const CANCEL_DESCRIPTION = "Cancel the active Ralph Loop.";
 const HELP_DESCRIPTION = "Show Ralph Loop plugin help and available commands.";
 
-export async function registerCommands(ctx: Plugin.Context): Promise<void> {
+export async function registerCommands(
+  ctx: Plugin.Context,
+  store: StateStore = stateStore,
+): Promise<void> {
   const { data } = await ctx.command.list();
   const existing = new Set(data.map((command) => command.name));
 
@@ -29,7 +32,7 @@ export async function registerCommands(ctx: Plugin.Context): Promise<void> {
             return;
           }
 
-          const result = await startLoop(ctx, sessionID, task, DEFAULT_MAX_ITERATIONS);
+          const result = await startLoop(ctx, sessionID, task, DEFAULT_MAX_ITERATIONS, store);
           await ctx.session.prompt({
             ...prompt,
             sessionID,
@@ -52,7 +55,7 @@ export async function registerCommands(ctx: Plugin.Context): Promise<void> {
         description: CANCEL_DESCRIPTION,
         async execute({ sessionID, prompt, delivery }) {
           await ctx.session.switchAgent({ sessionID, agent: "build" });
-          const result = await cancelLoop(ctx, sessionID);
+          const result = await cancelLoop(ctx, sessionID, store);
           await ctx.session.prompt({ ...prompt, sessionID, text: result, delivery });
         },
       });

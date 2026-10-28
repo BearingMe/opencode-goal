@@ -1,6 +1,6 @@
 import { Error as ToolError } from "@opencode/plugin/promise/tool";
 import type { Plugin } from "@opencode/plugin";
-import { DEFAULT_MAX_ITERATIONS, clearState, readState, writeState } from "./state.ts";
+import { DEFAULT_MAX_ITERATIONS, stateStore, type StateStore } from "./state.ts";
 
 export const HELP_TEXT = `# Ralph Loop Help
 
@@ -40,6 +40,7 @@ export async function startLoop(
   sessionID: string,
   task: unknown,
   maxIterations: unknown = DEFAULT_MAX_ITERATIONS,
+  store: StateStore = stateStore,
 ): Promise<StartLoopResult> {
   if (typeof task !== "string" || task.trim().length === 0) {
     throw new ToolError({ message: "Ralph Loop requires a non-empty task." });
@@ -51,7 +52,7 @@ export async function startLoop(
   }
 
   const directory = await getSessionDirectory(ctx, sessionID);
-  writeState(directory, {
+  store.write(directory, {
     active: true,
     iteration: 0,
     maxIterations: limit,
@@ -66,12 +67,16 @@ export async function startLoop(
   };
 }
 
-export async function cancelLoop(ctx: Plugin.Context, sessionID: string): Promise<string> {
+export async function cancelLoop(
+  ctx: Plugin.Context,
+  sessionID: string,
+  store: StateStore = stateStore,
+): Promise<string> {
   const directory = await getSessionDirectory(ctx, sessionID);
-  const state = readState(directory);
+  const state = store.read(directory);
   if (!state.active) return "No active Ralph Loop to cancel.";
 
-  clearState(directory);
+  store.clear(directory);
   return `Ralph Loop cancelled after ${state.iteration} iteration(s).`;
 }
 

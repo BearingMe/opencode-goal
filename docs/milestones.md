@@ -103,10 +103,10 @@ Convert the current OpenCode V1 Ralph Loop plugin to V2 while preserving its use
 
 **Acceptance criteria**
 
-- [ ] Existing `.opencode/ralph-loop.local.md` files remain readable and round-trip fields correctly, including Windows line endings.
-- [ ] State remains project-relative; no switch to plugin storage occurs without an explicit decision and migration path.
-- [ ] Failed reads/writes/deletes cannot be reported as successful start, cancel, or completion.
-- [ ] Tests cover malformed, missing, and inaccessible state files.
+- [x] Existing `.opencode/ralph-loop.local.md` files remain readable and round-trip fields correctly, including Windows line endings.
+- [x] State remains project-relative; no switch to plugin storage occurs without an explicit decision and migration path.
+- [x] Missing state is distinct from read failure; write/delete failures propagate, and start/cancel tools do not report success when required I/O fails. M7 verifies completion cleanup against the same policy.
+- [x] Tests cover malformed, missing, and inaccessible state files.
 
 ### M6 — Subscribe to and scope V2 events
 

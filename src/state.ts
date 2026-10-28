@@ -12,26 +12,74 @@ export interface RalphState {
   prompt?: string;
 }
 
+export class MalformedStateError extends Error {
+  constructor() {
+    super(
+      "Ralph Loop state is malformed. Repair or remove .opencode/ralph-loop.local.md before retrying.",
+    );
+    this.name = "MalformedStateError";
+  }
+}
+
+export class StateFileError extends Error {
+  constructor(
+    readonly operation: "read" | "write" | "delete",
+    cause: unknown,
+  ) {
+    super(
+      `Could not ${operation} project-local Ralph Loop state. Check .opencode/ralph-loop.local.md and project file permissions before retrying.`,
+      { cause },
+    );
+    this.name = "StateFileError";
+  }
+}
+
 export function parseState(content: string): RalphState {
-  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  if (!match) return { active: false, iteration: 0, maxIterations: DEFAULT_MAX_ITERATIONS };
+  const normalized = content.startsWith("\uFEFF") ? content.slice(1) : content;
+  const match = normalized.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+  if (!match) throw new MalformedStateError();
 
-  const frontmatter = match[1];
-  const state: RalphState = { active: false, iteration: 0, maxIterations: DEFAULT_MAX_ITERATIONS };
+  const fields = new Map<string, string>();
+  const knownFields = new Set(["active", "iteration", "maxIterations", "sessionId"]);
 
-  for (const line of frontmatter.split(/\r?\n/)) {
-    const [key, ...valueParts] = line.split(":");
-    const value = valueParts.join(":").trim();
-    if (key === "active") state.active = value === "true";
-    if (key === "iteration") state.iteration = parseInt(value) || 0;
-    if (key === "maxIterations") state.maxIterations = parseInt(value) || DEFAULT_MAX_ITERATIONS;
-    if (key === "sessionId") state.sessionId = value || undefined;
+  for (const line of match[1].split(/\r?\n/)) {
+    const separator = line.indexOf(":");
+    if (separator < 0) continue;
+
+    const key = line.slice(0, separator).trim();
+    if (!knownFields.has(key)) continue;
+    if (fields.has(key)) throw new MalformedStateError();
+    fields.set(key, line.slice(separator + 1).trim());
   }
 
-  const body = content.slice(match[0].length).trim();
+  if (fields.size === 0) throw new MalformedStateError();
+
+  const activeValue = fields.get("active");
+  if (activeValue !== undefined && activeValue !== "true" && activeValue !== "false") {
+    throw new MalformedStateError();
+  }
+
+  const state: RalphState = {
+    active: activeValue === "true",
+    iteration: parseIntegerField(fields.get("iteration"), 0),
+    maxIterations: parseIntegerField(fields.get("maxIterations"), DEFAULT_MAX_ITERATIONS, 1),
+  };
+  const sessionId = fields.get("sessionId");
+  if (sessionId) state.sessionId = sessionId;
+
+  const body = normalized.slice(match[0].length).trim();
   if (body) state.prompt = body;
 
   return state;
+}
+
+function parseIntegerField(value: string | undefined, fallback: number, minimum = 0): number {
+  if (value === undefined) return fallback;
+  if (!/^\d+$/.test(value)) throw new MalformedStateError();
+
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < minimum) throw new MalformedStateError();
+  return parsed;
 }
 
 export function serializeState(state: RalphState): string {
@@ -53,20 +101,27 @@ export function getStateFilePath(directory: string): string {
 
 export function readState(directory: string): RalphState {
   const path = getStateFilePath(directory);
+  let content: string;
   try {
-    return parseState(readFileSync(path, "utf-8"));
+    content = readFileSync(path, "utf-8");
   } catch (error) {
     if (isNodeError(error) && error.code === "ENOENT") {
       return { active: false, iteration: 0, maxIterations: DEFAULT_MAX_ITERATIONS };
     }
-    throw error;
+    throw new StateFileError("read", error);
   }
+  return parseState(content);
 }
 
 export function writeState(directory: string, state: RalphState): void {
   const path = getStateFilePath(directory);
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, serializeState(state), "utf-8");
+  const content = serializeState(state);
+  try {
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, content, "utf-8");
+  } catch (error) {
+    throw new StateFileError("write", error);
+  }
 }
 
 export function clearState(directory: string): boolean {
@@ -76,9 +131,21 @@ export function clearState(directory: string): boolean {
     return true;
   } catch (error) {
     if (isNodeError(error) && error.code === "ENOENT") return false;
-    throw error;
+    throw new StateFileError("delete", error);
   }
 }
+
+export interface StateStore {
+  read(directory: string): RalphState;
+  write(directory: string, state: RalphState): void;
+  clear(directory: string): boolean;
+}
+
+export const stateStore: StateStore = {
+  read: readState,
+  write: writeState,
+  clear: clearState,
+};
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
   return error instanceof Error;

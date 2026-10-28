@@ -1,21 +1,51 @@
 import { describe, it, expect } from "vitest";
-import { parseState, serializeState, type RalphState } from "../src/state.ts";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import {
+  clearState,
+  getStateFilePath,
+  MalformedStateError,
+  parseState,
+  readState,
+  serializeState,
+  StateFileError,
+  type RalphState,
+  writeState,
+} from "../src/state.ts";
+
+function makeProjectDirectory(): string {
+  return mkdtempSync(join(tmpdir(), "ralph-loop-state-"));
+}
+
+function captureStateFileError(action: () => unknown): StateFileError {
+  try {
+    action();
+  } catch (error) {
+    expect(error).toBeInstanceOf(StateFileError);
+    return error as StateFileError;
+  }
+  throw new Error("Expected a state file operation to fail.");
+}
 
 describe("parseState", () => {
-  it("returns defaults when no frontmatter is present", () => {
-    expect(parseState("")).toEqual({
+  it.each(["", "just some text", "---\nactive: true\niteration: 0"])(
+    "rejects missing or incomplete frontmatter: %s",
+    (content) => {
+      expect(() => parseState(content)).toThrow(MalformedStateError);
+    },
+  );
+
+  it("keeps defaults for omitted fields in valid partial frontmatter", () => {
+    expect(parseState("---\niteration: 2\n---")).toEqual({
       active: false,
-      iteration: 0,
+      iteration: 2,
       maxIterations: 100,
     });
   });
 
-  it("returns defaults when content has no frontmatter delimiters", () => {
-    expect(parseState("just some text")).toEqual({
-      active: false,
-      iteration: 0,
-      maxIterations: 100,
-    });
+  it("rejects frontmatter without any recognized state fields", () => {
+    expect(() => parseState("---\nunknown: value\n---")).toThrow(MalformedStateError);
   });
 
   it("parses active, iteration, maxIterations, sessionId", () => {
@@ -36,9 +66,11 @@ describe("parseState", () => {
     });
   });
 
-  it("treats `active: anything-but-true` as false", () => {
-    const content = "---\nactive: false\niteration: 1\nmaxIterations: 10\n---";
-    expect(parseState(content).active).toBe(false);
+  it("rejects invalid known values and duplicate state fields", () => {
+    expect(() => parseState("---\nactive: maybe\n---")).toThrow(MalformedStateError);
+    expect(() => parseState("---\niteration: nope\n---")).toThrow(MalformedStateError);
+    expect(() => parseState("---\nmaxIterations: 0\n---")).toThrow(MalformedStateError);
+    expect(() => parseState("---\nactive: true\nactive: false\n---")).toThrow(MalformedStateError);
   });
 
   it("captures the body as the prompt", () => {
@@ -69,6 +101,10 @@ describe("parseState", () => {
       sessionId: "ses_win",
       prompt: "Windows-saved task",
     });
+  });
+
+  it("accepts a UTF-8 BOM before valid frontmatter", () => {
+    expect(parseState("\uFEFF---\nactive: true\n---").active).toBe(true);
   });
 });
 
@@ -118,5 +154,71 @@ describe("parseState <-> serializeState round trip", () => {
       maxIterations: 100,
     };
     expect(parseState(serializeState(original))).toEqual(original);
+  });
+});
+
+describe("project-local state file operations", () => {
+  it("treats only a missing state file as inactive", () => {
+    const directory = makeProjectDirectory();
+
+    expect(readState(directory)).toEqual({
+      active: false,
+      iteration: 0,
+      maxIterations: 100,
+    });
+  });
+
+  it("does not turn malformed existing state into inactive defaults", () => {
+    const directory = makeProjectDirectory();
+    const path = getStateFilePath(directory);
+    mkdirSync(join(directory, ".opencode"), { recursive: true });
+    writeFileSync(path, "not a state file", "utf-8");
+
+    expect(() => readState(directory)).toThrow(MalformedStateError);
+  });
+
+  it("round-trips state through the project-local file and clears it", () => {
+    const directory = makeProjectDirectory();
+    const state: RalphState = {
+      active: true,
+      iteration: 3,
+      maxIterations: 20,
+      sessionId: "ses_project",
+      prompt: "Project-local task",
+    };
+
+    writeState(directory, state);
+
+    expect(readState(directory)).toEqual(state);
+    expect(clearState(directory)).toBe(true);
+    expect(clearState(directory)).toBe(false);
+  });
+
+  it("wraps non-missing read, write, and delete failures with their operation", () => {
+    const readDirectory = makeProjectDirectory();
+    const readPath = getStateFilePath(readDirectory);
+    mkdirSync(readPath, { recursive: true });
+    const readError = captureStateFileError(() => readState(readDirectory));
+    expect(readError.operation).toBe("read");
+    expect(readError.cause).toBeInstanceOf(Error);
+    expect(readError.message).not.toContain(readPath);
+
+    const writeDirectory = makeProjectDirectory();
+    const writePath = getStateFilePath(writeDirectory);
+    writeFileSync(join(writeDirectory, ".opencode"), "not a directory", "utf-8");
+    const writeError = captureStateFileError(() =>
+      writeState(writeDirectory, { active: true, iteration: 0, maxIterations: 5 }),
+    );
+    expect(writeError.operation).toBe("write");
+    expect(writeError.cause).toBeInstanceOf(Error);
+    expect(writeError.message).not.toContain(writePath);
+
+    const deleteDirectory = makeProjectDirectory();
+    const deletePath = getStateFilePath(deleteDirectory);
+    mkdirSync(deletePath, { recursive: true });
+    const deleteError = captureStateFileError(() => clearState(deleteDirectory));
+    expect(deleteError.operation).toBe("delete");
+    expect(deleteError.cause).toBeInstanceOf(Error);
+    expect(deleteError.message).not.toContain(deletePath);
   });
 });
