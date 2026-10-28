@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { STATE_PATH } from "./commands.ts";
+import { STATE_PATH } from "./state-path.ts";
 
 export const DEFAULT_MAX_ITERATIONS = 100;
 

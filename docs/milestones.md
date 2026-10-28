@@ -71,10 +71,11 @@ Convert the current OpenCode V1 Ralph Loop plugin to V2 while preserving its use
 
 **Acceptance criteria**
 
-- [ ] `/ralph-loop`, `/cancel-ralph`, and `/help` work in V2 without duplicate definitions.
-- [ ] Command execution uses the tested plugin behavior rather than a second, divergent state-management path.
-- [ ] Command arguments are preserved; registration checks `ctx.command.list()` and skips existing IDs, preserving user-defined commands.
-- [ ] Packaged command assets match the chosen runtime approach.
+- [x] `/ralph-loop`, `/cancel-ralph`, and `/help` register through V2 command transforms; pre-existing IDs are skipped.
+- [x] Start/cancel commands use the same tested `startLoop` / `cancelLoop` behavior as the tools.
+- [x] Command task text and requested delivery mode are preserved; registration checks `ctx.command.list()` and skips existing IDs.
+- [x] A user-owned ID present at setup remains skipped for this plugin lifetime; removal does not silently transfer command ownership until plugin reload/restart.
+- [x] `src/commands.ts` is authoritative; obsolete Markdown command files are removed and `commands/` is not packaged.
 
 ### M4 — Port skill discovery
 

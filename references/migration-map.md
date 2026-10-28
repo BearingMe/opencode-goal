@@ -15,7 +15,7 @@ Repository analysis based on the current implementation and the official referen
 | `client.session.prompt({ path, body })` | `ctx.session.prompt({ sessionID, text })` | V2 prompt inputs are direct fields; use the event's session ID and verify behavior for queued/active sessions. |
 | Markdown state under `<project>/.opencode/ralph-loop.local.md` | Initially retain the file format and path | Preserves current project-local persistence. Do not switch to plugin storage without confirming its project scoping and a migration strategy. |
 | `setupSkills()` copies packaged skills into global config | Register packaged skills with `ctx.skill.transform` | Remove global copying; check `ctx.skill.list()` and skip existing IDs. Test clean installs, duplicate IDs, and Windows paths. |
-| `commands/` Markdown and `src/commands.ts` templates | V2 command transforms | Keep one code-backed source of truth; existing command IDs win. |
+| `commands/` Markdown and `src/commands.ts` templates | V2 command transforms in `src/commands.ts` | Keep TypeScript as the sole source; skip names returned by `ctx.command.list()` and remove/package no Markdown command files. |
 | `package.json` `main` and `@opencode-ai/plugin` peer/dev dependencies | V2 package `exports` and `@opencode/plugin` dependency | Target OpenCode 2.1.4 and matching `@opencode/plugin` 2.1.4. |
 | V1 loader-specific comments and `AGENTS.md` constraints | Reassess against the V2 loader | Do not carry V1 export-loader restrictions forward without a V2 source confirming them. |
 

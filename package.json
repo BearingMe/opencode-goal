@@ -32,7 +32,6 @@
   "homepage": "https://github.com/charfeng1/opencode-ralph-loop#readme",
   "files": [
     "src/",
-    "commands/",
     "skills/"
   ],
   "engines": {

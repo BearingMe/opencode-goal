@@ -25,11 +25,17 @@ async function getTools(
       get: async ({ sessionID }: { sessionID: string }) => ({
         location: { directory: sessionDirectories[sessionID] ?? directory },
       }),
+      prompt: async () => undefined,
+      switchAgent: async () => undefined,
     },
     tool: {
       transform: async (register: (editor: { add(tool: RegisteredTool): void }) => void) => {
         register({ add: (tool) => tools.set(tool.name, tool) });
       },
+    },
+    command: {
+      list: async () => ({ data: [] }),
+      transform: async () => undefined,
     },
   } as unknown as OpenCodePlugin.Context;
 

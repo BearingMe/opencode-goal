@@ -2,7 +2,7 @@
 
 Checkpoints record verified progress and the next useful place to resume. Milestone acceptance criteria in [`milestones.md`](milestones.md) remain the completion authority; do not mark a checkpoint complete from intention alone.
 
-**Snapshot:** 2026-10-28. M0–M2 are complete and committed. M3–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
+**Snapshot:** 2026-10-28. M0–M2 are complete and committed. M3 implementation and checks are verified; adversary review passed and commit closeout is pending. M4–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
 
 ## M0 — Confirm the V2 compatibility contract
 
@@ -56,17 +56,20 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 ## M3 — Port slash commands
 
 **Decisions**
-- Preserve `/ralph-loop`, `/cancel-ralph`, and `/help`; select a single authoritative command source during this milestone.
+- Preserve `/ralph-loop`, `/cancel-ralph`, and `/help`; `src/commands.ts` is the sole runtime source and registers V2 command transforms.
+- Command registration reads `ctx.command.list()` and skips existing IDs. Ownership is fixed for the plugin lifetime: a skipped ID is not reclaimed after a user command is removed until plugin reload/restart. This follows the M0 setup-time skip policy and avoids silently shifting command ownership.
+- Start/cancel reuse `src/loop.ts`, which is also used by the tools. Task text and delivery mode are preserved; all three commands select the legacy `build` agent.
 
 **Issues**
-- Legacy templates remain in `src/commands.ts`; `commands/*.md` are packaged but not loaded. No V2 commands are registered yet.
-- The V1 config hook is not the V2 command transform API.
+- V2 command submission can fail after state is written; failure/rollback policy remains for M7.
 
 **Thoughts**
-- Preserve argument handling and user-defined precedence; do not let command templates duplicate state transitions.
+- Removed obsolete `commands/*.md` files and stopped packaging `commands/`; slash commands are executable transform definitions, not Markdown templates.
+- Tests cover initial collision skipping and transform replay after removal, argument/delivery preservation, state effects, empty input, cancellation, help, and build-agent selection for all commands.
+- Runtime smoke: OpenCode 2.1.4 loaded the packed package. A project `/help` added after setup appeared in `/api/command` and its actual command dispatch produced the user-defined message. Plugin `/ralph-loop` dispatch wrote the invoking session ID to the state file; `/cancel-ralph` dispatch removed it.
 
 **Current state**
-- No V2 command registration. Depends on M1.
+- M3 acceptance tests pass (39 total); adversary review passed and commit closeout is pending.
 
 ## M4 — Port skill discovery
 
