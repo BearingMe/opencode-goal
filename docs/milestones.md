@@ -8,7 +8,7 @@ Convert the current OpenCode V1 Ralph Loop plugin to V2 while preserving its use
 
 - A **milestone** is one small, reviewable outcome.
 - Each milestone is divided into **phases**; each phase groups work at epic scale.
-- A milestone is complete only when every acceptance checkbox is verified. Do not mark planned or assumed work complete.
+- A milestone is complete only when every acceptance checkbox and [`definiotion-of-done.md`](definiotion-of-done.md) gate is verified. Do not mark planned or assumed work complete.
 - Keep changes within the milestone. Preserve the fork/package identity and do not publish as part of this conversion without explicit approval.
 
 ## Milestones
