@@ -170,13 +170,17 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 ## M9 — Align repository documentation with V2
 
 **Decisions**
-- Update docs only to describe behavior that is implemented and verified. Retain V1 loader rules while V1 support remains.
+- Describe this checkout as V2-only, while clearly distinguishing it from the still-published V1 npm artifact.
+- Remove V1 loader constraints from current-runtime guidance: V1 support is out of scope and OpenCode 2.1.4 loaded the packed V2 export through a discovered `.opencode/plugins` wrapper.
 
 **Issues**
-- README and `docs/architecture.md` still contain stale V1 command/setup claims.
+- The fork remote is `BearingMe/opencode-goal`; package and release metadata still identify `charfeng1/opencode-ralph-loop`. Do not publish or change identity without approval.
+- npm's current `opencode-ralph-loop@1.0.10` tarball is the legacy V1 artifact; the V2 port remains unpublished.
 
 **Thoughts**
-- Keep migration snapshots clearly separate from runtime guarantees and update `docs/architecture.md` after the port.
+- OpenCode 2.1.4 loaded the installed V2 tarball through `.opencode/plugins/ralph-loop.ts` containing `export { default } from "opencode-ralph-loop";`.
+- Registry tarball inspection showed legacy `main: src/index.ts` and peer dependency `@opencode-ai/plugin`; the local V2 package instead exports `src/index.ts` and depends on `@opencode/plugin@2.1.4`.
+- Keep official V2 documentation in `references/` labeled as dated snapshots; keep runtime structure in `docs/architecture.md` and operational behavior in README/guardrails.
 
 **Current state**
-- Harness and migration-planning docs exist, but runtime/user documentation has not been updated for V2. Blocked on implementation and M8.
+- README, CONTRIBUTING, AGENTS, architecture, guardrails, errors, and logging are aligned with the implemented V2 source and unpublished-package status. `npm run typecheck`, all 83 tests, and adversary review pass; the local M9 commit remains.

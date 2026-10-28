@@ -18,7 +18,7 @@ This is a forked, actively evolving codebase intended for agent-led development.
 
 ## Implementation and verification
 
-- Follow the current architecture in [`architecture.md`](architecture.md); distinguish implemented V1 behavior from planned V2 behavior.
+- Follow the V2 module boundaries in [`architecture.md`](architecture.md). Treat `references/` as dated migration snapshots, not runtime behavior.
 - Follow [`logging.md`](logging.md) and [`errors.md`](errors.md). Never hide failures merely to make a test or interaction look successful.
 - Add or update tests for changed behavior. Run `npm run typecheck` and `npm test` when code changes; report any checks not run.
 - Do not claim work, tests, releases, or completion that did not happen. Never output the Ralph completion promise unless the requested task is fully and verifiably done.

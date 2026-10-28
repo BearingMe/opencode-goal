@@ -16,29 +16,27 @@ npm test            # vitest run
 
 ## Agent docs
 
-- Runtime is an incremental OpenCode V2 port; check `docs/checkpoints.md` before assuming loop-event and continuation behavior is complete.
-- Read `docs/guardrails.md`; treat `docs/architecture.md` as the V1 baseline until M9 updates it, and consult `docs/logging.md` / `docs/errors.md` for relevant changes.
-- Follow `docs/milestones.md` for the V2 conversion sequence.
-- Update `docs/checkpoints.md` at phase boundaries and handoffs; record verified state only.
+- Read `docs/guardrails.md` and `docs/architecture.md` before structural or release changes; consult `docs/errors.md` / `docs/logging.md` when relevant.
+- `docs/checkpoints.md` records verified V2 migration evidence and operational limits; do not treat migration snapshots as runtime code.
 - Use `docs/definiotion-of-done.md` before marking a milestone complete.
 
 ## Layout
 
-- `src/index.ts` — V2 plugin entry; registrations live in sibling modules
-- `src/commands.ts`, `src/tools.ts`, `src/skills.ts` — V2 command, tool, and skill registration
-- `src/state.ts` — project-local state parsing and I/O; `skills/` contains packaged skill files, never copied globally
-- `tests/` — vitest; `tests/setup.ts` sandboxes `HOME` to a tmpdir
-- `.github/workflows/release.yml` — CI + auto-publish on master
+- See `docs/architecture.md` for source-module ownership and dependency boundaries.
+- `tests/` uses Vitest; `tests/setup.ts` sandboxes `HOME` to a temp directory.
 
 ## Package
 
-- No build step; ships `src/*.ts` directly via `"main": "src/index.ts"`.
-- Runtime requires Node 18+; tests require Node 20+ (Vitest 4 imports `node:util.styleText`).
+- V2-only source; minimum OpenCode 2.1.4 and pinned `@opencode/plugin` 2.1.4.
+- No build step; `package.json` exports `src/index.ts` and packages `src/` plus `skills/`.
+- Runtime requires Node 18+; tests require Node 20+.
+- The npm registry's 1.0.10 artifact is still V1; verify a V2 release exists before recommending package-name installation.
 
-## Legacy V1 migration notes
+## Runtime limits
 
-- These V1 API/loader constraints describe the previous runtime; verify V2 behavior against the pinned SDK and official V2 docs instead of carrying them forward.
+- State locks and request tracking are process-local; use one OpenCode runtime per project.
+- State is project-local at `.opencode/ralph-loop.local.md`; keep task content out of Git.
 
 ## Releases
 
-The workflow auto-publishes on master. This fork's remote and package metadata differ; verify the target and get explicit approval before version or release changes. See `docs/guardrails.md` and `.github/workflows/release.yml`.
+The inherited master workflow can publish/tag when the package version exceeds npm's latest. This fork's remote and package metadata differ; verify the target and get explicit approval before version, release, publish, or push changes. See `docs/guardrails.md` and `.github/workflows/release.yml`.

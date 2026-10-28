@@ -2,7 +2,7 @@
 
 ## Current state
 
-The plugin has no logging abstraction and emits no intentional diagnostics. Several operations catch and discard errors; see [`errors.md`](errors.md). Do not mistake silence for successful operation.
+The plugin has no logging abstraction. The event boundary reports caught lifecycle errors with `console.error`; tool and state failures propagate to OpenCode. It emits no debug or per-iteration logs. V1 migration logging examples below are historical, not runtime behavior.
 
 ## Rules for changes
 

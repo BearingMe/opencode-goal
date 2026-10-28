@@ -1,7 +1,9 @@
 # opencode-ralph-loop
 
-[![CI](https://github.com/charfeng1/opencode-ralph-loop/actions/workflows/release.yml/badge.svg)](https://github.com/charfeng1/opencode-ralph-loop/actions/workflows/release.yml)
+[![CI](https://github.com/BearingMe/opencode-goal/actions/workflows/release.yml/badge.svg)](https://github.com/BearingMe/opencode-goal/actions/workflows/release.yml)
 [![npm version](https://img.shields.io/npm/v/opencode-ralph-loop.svg)](https://www.npmjs.com/package/opencode-ralph-loop)
+
+> This checkout is the `BearingMe/opencode-goal` fork. The npm badge follows the upstream package and does not indicate that this fork's V2 port has been published.
 
 Minimal Ralph Loop plugin for [opencode](https://opencode.ai) - auto-continues until task completion.
 
@@ -15,19 +17,33 @@ However, we personally found the full suite a bit heavy for our workflow. We als
 
 If you want the full-featured experience, definitely check out oh-my-opencode. If you just want auto-continuation loops with minimal overhead, this plugin is for you.
 
+## Support and release status
+
+- This source supports OpenCode V2 **2.1.4 or later** and pins `@opencode/plugin` 2.1.4. V1 is not supported. Runtime requires Node.js 18 or later; tests require Node.js 20 or later.
+- As of 2026-10-28, npm's `opencode-ralph-loop@1.0.10` is the inherited V1 artifact (`main` entrypoint and `@opencode-ai/plugin` peer dependency). This fork has not published its V2 port. Do not install the npm registry version for V2.
+
 ## Installation
 
-Add to your `~/.config/opencode/opencode.json`:
+### Try the current V2 source
 
-```json
-{
-  "plugin": ["opencode-ralph-loop"]
-}
+Pack the V2 source from this checkout, install that tarball in your OpenCode project, then add a local plugin wrapper:
+
+```sh
+# In this checkout
+npm install
+npm pack
+
+# In the OpenCode project; use the path to the tarball created above
+npm install --prefix /path/to/project /path/to/opencode-ralph-loop-1.0.10.tgz
 ```
 
-Restart opencode. That's it!
+Create `.opencode/plugins/ralph-loop.ts` in the OpenCode project:
 
-On first run, the plugin will automatically install skills and commands to your `~/.config/opencode/` directory.
+```ts
+export { default } from "opencode-ralph-loop";
+```
+
+OpenCode 2.1.4 loads this local plugin file and its installed package. This tarball-and-wrapper path was smoke-tested; no provider request is needed for setup. Once a V2-compatible release is published, OpenCode can also load the package by adding `"opencode-ralph-loop"` to the `"plugins"` array in `opencode.json(c)`.
 
 ## Usage
 
@@ -37,7 +53,7 @@ On first run, the plugin will automatically install skills and commands to your 
 /ralph-loop "Build a REST API with authentication"
 ```
 
-The AI will work on your task and automatically continue until completion.
+The command starts a loop in the current session with a 100-iteration default. The registered `ralph-loop` tool also accepts a custom `maxIterations`.
 
 ### Cancel a loop
 
@@ -53,11 +69,10 @@ The AI will work on your task and automatically continue until completion.
 
 ## How it works
 
-1. `/ralph-loop` creates a state file at `.opencode/ralph-loop.local.md`
-2. When the AI goes idle, the plugin checks if `<promise>DONE</promise>` was output
-3. If not found, it injects "Continue from where you left off"
-4. Loop continues until DONE is found or max iterations (100) reached
-5. State file is deleted when complete
+1. `/ralph-loop` stores the task and session ID in `.opencode/ralph-loop.local.md`.
+2. On `session.idle`, the plugin checks the latest assistant text in the active session context for `<promise>DONE</promise>`.
+3. If incomplete, it reserves one iteration and queues one continuation prompt.
+4. Completion or the iteration limit clears state; prompt-admission uncertainty keeps the iteration reserved and blocks automatic retries.
 
 ### Completion Promise
 
@@ -90,36 +105,18 @@ sessionId: ses_abc123
 Your original task prompt
 ```
 
-Add `.opencode/ralph-loop.local.md` to your `.gitignore`.
+The file can contain the original task prompt. Add `.opencode/ralph-loop.local.md` to `.gitignore`.
 
-## Features
+## Operational limits
 
-- **Plug-and-play**: Just add to config and restart - no manual setup
-- **Auto-setup**: Skills and commands are automatically installed on first run
-- **Minimal**: ~300 lines, no bloat
-- **Project-relative**: State file in `.opencode/`, not global
-- **Completion detection**: Scans session messages for DONE promise
-- **Progressive context**: Skills provide context only when needed
-- **Commands**: `/ralph-loop`, `/cancel-ralph`, and `/help`
+- Use one OpenCode runtime per project; state locks and request tracking are process-local.
+- Cancellation stops future loop continuations but cannot retract a prompt OpenCode already admitted.
+- If prompt admission remains unsettled, cancel the loop; restart OpenCode before starting another loop if the request never settles.
+- Existing commands with the same IDs are left untouched. Skills are registered by the plugin and are not copied to a global directory.
 
 ## Architecture
 
-Following Anthropic's Claude Code plugin pattern:
-
-```
-opencode-ralph-loop/
-├── src/
-│   └── index.ts        # Main plugin with event hooks and tools
-├── skills/
-│   ├── ralph-loop/     # Progressive context for starting loops
-│   ├── cancel-ralph/   # Context for cancellation
-│   └── help/           # Plugin documentation
-├── commands/
-│   ├── ralph-loop.md   # Slash command for starting
-│   ├── cancel-ralph.md # Slash command for cancelling
-│   └── help.md         # Slash command for help
-└── package.json
-```
+See [`docs/architecture.md`](docs/architecture.md) for module ownership and dependency boundaries.
 
 ## Contributing
 
@@ -127,7 +124,7 @@ PRs welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Releases
 
-Auto-published from CI with [npm provenance](https://docs.npmjs.com/generating-provenance-statements) via [OIDC trusted publishing](https://docs.npmjs.com/trusted-publishers) — each tarball is cryptographically linked to the exact commit, no long-lived tokens involved.
+The inherited release workflow can publish to npm and create a GitHub release when a higher package version is pushed to `master`. This fork's Git remote and package publishing metadata still point to different projects; no V2 package has been published. See [`docs/guardrails.md`](docs/guardrails.md) before any release or version change.
 
 ## Credits
 

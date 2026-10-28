@@ -1,10 +1,10 @@
 # Error handling
 
-## Legacy V1 behavior
+## Legacy V1 behavior (not the current runtime)
 
-The current V1 implementation favors keeping failures out of the TUI by swallowing them. This is inherited behavior and can report success while losing loop state:
+The previous V1 implementation often swallowed failures, which could report success while losing loop state. This table records migration defects; it does not describe the V2 runtime.
 
-| Operation | Current failure behavior | Risk |
+| Operation | Legacy failure behavior | Risk |
 | --- | --- | --- |
 | Skill copy | Ignores copy errors | A skill may be unavailable with no diagnostic |
 | State read | Catches errors and returns inactive defaults | An active loop can appear absent |
@@ -32,6 +32,6 @@ The current V1 implementation favors keeping failures out of the TUI by swallowi
 - Normalize caught values as `unknown`; preserve the cause for diagnostics. User-facing errors should say what failed and what can be tried next, without exposing prompts, secrets, stack traces, or raw provider responses.
 - Test failure paths for filesystem reads/writes/deletes, message lookup, continuation admission, and cancellation. Assert both the returned error/result and persisted state.
 
-## Remaining V2 work
+## Verification status
 
-M8 must verify completion, continuation, and cancellation behavior from the packed artifact on the minimum supported OpenCode release. M9 aligns runtime documentation after that verification. See [`references/opencode-v2/plugin-migrate-v1.md`](../references/opencode-v2/plugin-migrate-v1.md).
+M8 verified completion, continuation, and cancellation behavior from the packed artifact on OpenCode 2.1.4 using controlled event/session boundaries; see [`checkpoints.md`](checkpoints.md). Migration guidance remains a dated snapshot in [`references/opencode-v2/plugin-migrate-v1.md`](../references/opencode-v2/plugin-migrate-v1.md).

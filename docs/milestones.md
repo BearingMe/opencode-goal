@@ -2,7 +2,7 @@
 
 ## Goal
 
-Convert the OpenCode V1 Ralph Loop plugin to V2 while preserving its user-visible commands, loop behavior, and project-local state. Runtime status is incremental; [`checkpoints.md`](checkpoints.md) records verified progress, and V2 references are not evidence of a completed milestone by themselves.
+Complete the OpenCode V1-to-V2 conversion while preserving user-visible commands, loop behavior, and project-local state. [`checkpoints.md`](checkpoints.md) records verified runtime evidence; V2 references are snapshots, not proof of implementation.
 
 ## Planning format
 
@@ -165,9 +165,9 @@ Convert the OpenCode V1 Ralph Loop plugin to V2 while preserving its user-visibl
 
 **Acceptance criteria**
 
-- [ ] `README.md`, `CONTRIBUTING.md`, `AGENTS.md`, and `docs/architecture.md` agree with runtime behavior and supported versions.
-- [ ] V1-specific loader constraints are removed only if V1 support is dropped and the V2 loader contract is verified.
-- [ ] Migration references remain clearly identified as snapshots and are not presented as runtime implementation.
+- [x] `README.md`, `CONTRIBUTING.md`, `AGENTS.md`, and `docs/architecture.md` agree with runtime behavior and supported versions.
+- [x] V1-specific loader constraints are absent from current-runtime guidance because V1 is out of scope and the packed V2 source loaded through the `.opencode/plugins` wrapper on OpenCode 2.1.4.
+- [x] Migration references remain clearly identified as snapshots and are not presented as runtime implementation.
 
 ## References
 
