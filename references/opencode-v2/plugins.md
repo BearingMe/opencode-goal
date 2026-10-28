@@ -1,0 +1,109 @@
+## Overview
+
+Plugins modify OpenCode’s behavior and add new features. A plugin is one package with a server part, a TUI part, a GUI part, or any combination.
+
+.opencode/plugins/example/index.ts
+
+```ts
+import { Plugin } from "@opencode/plugin"
+
+export default Plugin.define({
+  id: "example",
+  async setup(ctx) {
+    await ctx.storage.set("loaded", true)
+  },
+})
+```
+
+Migrating an existing OpenCode 1 plugin? Follow the [V1 plugin migration guide](https://opencode.ai/v2/docs/build/plugins/migrate-v1).
+
+## Parts
+
+Each part is an export of the package. Every part’s SDK comes from the one `@opencode/plugin` dependency.
+
+package.json
+
+```json
+{
+  "name": "opencode-acme-plugin",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tui": "./src/tui.tsx",
+    "./gui-experimental": "./dist/gui-experimental.cjs",
+    "./rpc": "./src/rpc.ts"
+  },
+  "files": ["src", "dist"],
+  "dependencies": {
+    "@opencode/plugin": "latest"
+  }
+}
+```
+- **Server** (`.` or `./server`) runs in the OpenCode server with `@opencode/plugin`. It adds tools, hooks, integrations, commands, and agents. See [Server](https://opencode.ai/v2/docs/build/plugins/server), or [Effect plugins](https://opencode.ai/v2/docs/build/plugins/effect) for the Effect API.
+- **TUI** (`./tui`) runs in the terminal UI with `@opencode/plugin/tui`. See [TUI](https://opencode.ai/v2/docs/build/plugins/cli).
+- **GUI** (`./gui-experimental`) runs its `setup` in every OpenCode Desktop window and its `main` in the desktop app’s main process, with `@opencode/plugin/gui`. See [GUI](https://opencode.ai/v2/docs/build/plugins/gui).
+- **RPC** (`./rpc`) is a typed contract that the server part implements and the other parts and clients call. See [RPC](https://opencode.ai/v2/docs/build/plugins/rpc).
+
+The plugin’s `id` comes from its server part’s `Plugin.define`. A package with a GUI part and no server part takes its package name (or a local directory’s name) as its `id`. A TUI part declares its own `id`; a GUI part declares none and takes the plugin’s.
+
+## Load
+
+Plugins under `.opencode/plugins/` load automatically, like the local example above. To load published packages or plugin directories from other locations, add them to `plugins` in `opencode.json(c)`:
+
+opencode.jsonc
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": [
+    "opencode-acme-plugin",
+    "opencode-acme-plugin@1.2.0",
+    "@acme/opencode-plugin",
+    "./plugins/local",
+    "../shared/plugin",
+    "/absolute/path/plugin",
+    "file:///home/me/plugins/local",
+    {
+      "package": "@acme/opencode-plugin",
+      "options": {
+        "agent": "reviewer",
+        "strict": true,
+      },
+    },
+  ],
+}
+```
+- One entry loads every part. The TUI loads the TUI parts of the plugins its server loads, and OpenCode Desktop loads the GUI parts of the plugins in your global `opencode.json(c)`.
+- A package with only a TUI part goes in [`cli.json`](https://opencode.ai/v2/docs/cli/plugins) instead.
+- A local plugin directory with a `package.json` `name` and `exports` loads its parts through them, like the published package. Without them, it uses file names at its root: `server` (else `index`), `tui`, and `rpc` with a `.ts`, `.tsx`, or `.js` extension, and `gui-experimental.cjs` (or `.js`).
+- See [Configure plugins](https://opencode.ai/v2/docs/plugins) for more loading and configuration options.
+
+## Publish
+
+A published plugin is an npm package with the `package.json` above. Its parts use the same default exports as a local plugin.
+
+```bash
+npm publish
+```
+- Export `./rpc` when other plugins and clients should import your [RPC contract](https://opencode.ai/v2/docs/build/plugins/rpc) without loading your implementation.
+- Build the GUI bundle before you publish, and include it through `files`. See [Build the bundle](https://opencode.ai/v2/docs/build/plugins/gui#build-the-bundle).
+- Use versions compatible with the OpenCode release you target, and test the installed package, not only a workspace-linked copy. Publish a compatible plugin update when you adopt a newer API contract.
+
+[**Server**](https://opencode.ai/v2/docs/build/plugins/server)
+
+[Add tools, hooks, integrations, commands, and agents in the OpenCode server.](https://opencode.ai/v2/docs/build/plugins/server)
+
+[**TUI**
+
+Add commands, routes, slots, and Markdown renderers to the terminal UI.
+
+](https://opencode.ai/v2/docs/build/plugins/cli)[**GUI**
+
+Add panels, commands, settings pages, and native integrations to OpenCode Desktop.
+
+](https://opencode.ai/v2/docs/build/plugins/gui)[**RPC**
+
+Expose typed methods and events from the server part to the other parts and to clients.
+
+](https://opencode.ai/v2/docs/build/plugins/rpc)
