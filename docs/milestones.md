@@ -40,9 +40,9 @@ Convert the current OpenCode V1 Ralph Loop plugin to V2 while preserving its use
 
 **Acceptance criteria**
 
-- [ ] V2 loads the package and reports the chosen stable plugin ID.
-- [ ] Package metadata and exports match the selected V2 contract; source-shipping/no-build behavior is verified or deliberately changed.
-- [ ] A smoke test exercises the installed package on the minimum supported V2 release.
+- [x] OpenCode 2.1.4 loaded the installed package and its setup verified ID `opencode-ralph-loop`.
+- [x] Package metadata exports `./src/index.ts`; `npm pack` confirms source shipping with no build step.
+- [x] The packed package was installed in an isolated project and loaded by OpenCode 2.1.4.
 
 ### M2 — Port the three tools
 

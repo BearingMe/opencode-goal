@@ -2,7 +2,7 @@
 
 Checkpoints record verified progress and the next useful place to resume. Milestone acceptance criteria in [`milestones.md`](milestones.md) remain the completion authority; do not mark a checkpoint complete from intention alone.
 
-**Snapshot:** 2026-10-28. The runtime migration is in progress. M0 is complete; M1–M9 are not complete. V2 validation will target OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
+**Snapshot:** 2026-10-28. M0 is committed. M1 implementation and checks are verified; its adversary review/commit closeout is pending. M2–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
 
 ## M0 — Confirm the V2 compatibility contract
 
@@ -19,21 +19,22 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - V2 migration and plugin APIs were checked against official docs on 2026-10-28; the installed OpenCode runtime and matching SDK are both 2.1.4.
 
 **Current state**
-- Compatibility contract is settled and recorded. M0 is complete; implementation has not started.
+- Compatibility contract is settled and recorded. M0 is complete in commit `b7cc0c3`.
 
 ## M1 — Port the plugin package entrypoint
 
 **Decisions**
-- V2 entrypoint is planned as a `Plugin.define` plugin with `@opencode/plugin` 2.1.4; package export shape remains open.
+- Default export uses `Plugin.define` with ID `opencode-ralph-loop`; package export points to `src/index.ts` and the matching SDK 2.1.4 is a runtime dependency.
 
 **Issues**
-- Current default export is a V1 async function returning hooks/tools. `package.json` uses `main` and `@opencode-ai/plugin`.
+- Full `npm audit` reports six vulnerabilities in the development dependency tree; `npm audit --omit=dev` reports none. No automatic dependency upgrades were applied.
 
 **Thoughts**
-- Keep the no-build source-shipping approach only if the chosen V2 loader supports it.
+- `npm pack` created a tarball, which was installed in an isolated temporary project. A temporary `.opencode/plugins` wrapper imported the installed package entrypoint; OpenCode 2.1.4 logged it as loaded and setup wrote `opencode-ralph-loop` to a marker file.
+- Smoke command used `opencode run --standalone --model smoke-invalid/no-model ...`; the expected unavailable-model error happened after plugin setup, avoiding a provider call.
 
 **Current state**
-- No package or entrypoint changes. M1 is ready to start.
+- M1 acceptance checks are verified. The DoD review and Conventional Commit remain pending; do not call M1 complete until its commit hash is recorded.
 
 ## M2 — Port the three tools
 
@@ -41,7 +42,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Preserve `ralph-loop`, `cancel-ralph`, and `help` as the target tool IDs.
 
 **Issues**
-- Current tools use V1 `tool()`/Zod argument definitions and return strings; V2 uses tool transforms, JSON Schema, and structured output.
+- The V1 tools used `tool()`/Zod arguments; the current V2 entrypoint does not register tools yet. V2 uses tool transforms, JSON Schema, and structured output.
 
 **Thoughts**
 - Keep state effects behind the tested tool behavior; avoid parallel command-side state implementations.
@@ -55,7 +56,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Preserve `/ralph-loop`, `/cancel-ralph`, and `/help`; select a single authoritative command source during this milestone.
 
 **Issues**
-- Active templates are in `src/commands.ts`; `commands/*.md` are packaged but not loaded by the current entrypoint.
+- Legacy templates remain in `src/commands.ts`; `commands/*.md` are packaged but not loaded. No V2 commands are registered yet.
 - The V1 config hook is not the V2 command transform API.
 
 **Thoughts**
@@ -70,7 +71,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Register packaged skills with `ctx.skill.transform`; check `ctx.skill.list()` and skip existing IDs.
 
 **Issues**
-- Current `setupSkills()` copies packaged skills globally only when destinations are absent and silently ignores failures.
+- Packaged `skills/` are not yet registered by the V2 entrypoint; the V1 global-copy behavior was removed.
 
 **Thoughts**
 - Test clean install, duplicate IDs, and Windows paths; do not copy skills globally.
@@ -90,7 +91,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Implement the explicit failure distinctions and tests in `errors.md`; preserve CRLF parsing.
 
 **Current state**
-- Current V1 parser and persistence remain unchanged. No V2 state work has started; depends on M1.
+- V1 parsing/serialization now lives in `src/state.ts`; V2 state-file I/O is not implemented. Depends on M1.
 
 ## M6 — Subscribe to and scope V2 events
 
@@ -105,7 +106,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Treat plugin load location and event/session location as distinct until the event contract proves otherwise.
 
 **Current state**
-- Current V1 event callback remains in place. No V2 subscription or cleanup implementation; depends on M1.
+- No V2 event subscription or cleanup implementation yet. Depends on M1.
 
 ## M7 — Port completion and continuation behavior
 
@@ -134,7 +135,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - A workspace import is not sufficient; test the npm-packed contents in a clean V2 environment.
 
 **Current state**
-- No V2 package smoke test has been run. Blocked on M0–M7.
+- Only the entrypoint smoke test has run; final package behavior remains unverified. Depends on M2–M7.
 
 ## M9 — Align repository documentation with V2
 
