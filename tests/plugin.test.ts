@@ -100,11 +100,12 @@ describe("RalphLoopPlugin", () => {
     );
 
     expect(result.content).toContain("Ralph Loop started (max 5 iterations)");
-    expect(readState(directory)).toEqual({
+    expect(readState(directory)).toMatchObject({
       active: true,
       iteration: 0,
       maxIterations: 5,
       sessionId: "ses_test",
+      loopID: expect.any(String),
       prompt: "test task",
     });
   });

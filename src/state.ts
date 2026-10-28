@@ -9,6 +9,14 @@ export interface RalphState {
   iteration: number;
   maxIterations: number;
   sessionId?: string;
+  loopID?: string;
+  loopStartedAt?: number;
+  lastIdleEventID?: string;
+  lastIdleEventCreated?: number;
+  pendingIdleEventID?: string;
+  pendingIdleEventCreated?: number;
+  pendingRequestID?: string;
+  continuationBlocked?: boolean;
   prompt?: string;
 }
 
@@ -40,7 +48,20 @@ export function parseState(content: string): RalphState {
   if (!match) throw new MalformedStateError();
 
   const fields = new Map<string, string>();
-  const knownFields = new Set(["active", "iteration", "maxIterations", "sessionId"]);
+  const knownFields = new Set([
+    "active",
+    "iteration",
+    "maxIterations",
+    "sessionId",
+    "loopID",
+    "loopStartedAt",
+    "lastIdleEventID",
+    "lastIdleEventCreated",
+    "pendingIdleEventID",
+    "pendingIdleEventCreated",
+    "pendingRequestID",
+    "continuationBlocked",
+  ]);
 
   for (const line of match[1].split(/\r?\n/)) {
     const separator = line.indexOf(":");
@@ -58,6 +79,10 @@ export function parseState(content: string): RalphState {
   if (activeValue !== undefined && activeValue !== "true" && activeValue !== "false") {
     throw new MalformedStateError();
   }
+  const blockedValue = fields.get("continuationBlocked");
+  if (blockedValue !== undefined && blockedValue !== "true" && blockedValue !== "false") {
+    throw new MalformedStateError();
+  }
 
   const state: RalphState = {
     active: activeValue === "true",
@@ -66,6 +91,36 @@ export function parseState(content: string): RalphState {
   };
   const sessionId = fields.get("sessionId");
   if (sessionId) state.sessionId = sessionId;
+  const loopID = fields.get("loopID");
+  if (fields.has("loopID")) {
+    if (!loopID) throw new MalformedStateError();
+    state.loopID = loopID;
+  }
+  if (fields.has("loopStartedAt")) {
+    state.loopStartedAt = parseIntegerField(fields.get("loopStartedAt"), 0);
+  }
+  const lastIdleEventID = fields.get("lastIdleEventID");
+  if (fields.has("lastIdleEventID")) {
+    if (!lastIdleEventID) throw new MalformedStateError();
+    state.lastIdleEventID = lastIdleEventID;
+  }
+  if (fields.has("lastIdleEventCreated")) {
+    state.lastIdleEventCreated = parseIntegerField(fields.get("lastIdleEventCreated"), 0);
+  }
+  const pendingIdleEventID = fields.get("pendingIdleEventID");
+  if (fields.has("pendingIdleEventID")) {
+    if (!pendingIdleEventID) throw new MalformedStateError();
+    state.pendingIdleEventID = pendingIdleEventID;
+  }
+  if (fields.has("pendingIdleEventCreated")) {
+    state.pendingIdleEventCreated = parseIntegerField(fields.get("pendingIdleEventCreated"), 0);
+  }
+  const pendingRequestID = fields.get("pendingRequestID");
+  if (fields.has("pendingRequestID")) {
+    if (!pendingRequestID) throw new MalformedStateError();
+    state.pendingRequestID = pendingRequestID;
+  }
+  if (blockedValue !== undefined) state.continuationBlocked = blockedValue === "true";
 
   const body = normalized.slice(match[0].length).trim();
   if (body) state.prompt = body;
@@ -90,6 +145,20 @@ export function serializeState(state: RalphState): string {
     `maxIterations: ${state.maxIterations}`,
   ];
   if (state.sessionId) lines.push(`sessionId: ${state.sessionId}`);
+  if (state.loopID) lines.push(`loopID: ${state.loopID}`);
+  if (state.loopStartedAt !== undefined) lines.push(`loopStartedAt: ${state.loopStartedAt}`);
+  if (state.lastIdleEventID) lines.push(`lastIdleEventID: ${state.lastIdleEventID}`);
+  if (state.lastIdleEventCreated !== undefined) {
+    lines.push(`lastIdleEventCreated: ${state.lastIdleEventCreated}`);
+  }
+  if (state.pendingIdleEventID) lines.push(`pendingIdleEventID: ${state.pendingIdleEventID}`);
+  if (state.pendingIdleEventCreated !== undefined) {
+    lines.push(`pendingIdleEventCreated: ${state.pendingIdleEventCreated}`);
+  }
+  if (state.pendingRequestID) lines.push(`pendingRequestID: ${state.pendingRequestID}`);
+  if (state.continuationBlocked !== undefined) {
+    lines.push(`continuationBlocked: ${state.continuationBlocked}`);
+  }
   lines.push("---");
   if (state.prompt) lines.push("", state.prompt);
   return lines.join("\n");

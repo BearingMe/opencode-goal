@@ -66,10 +66,40 @@ describe("parseState", () => {
     });
   });
 
+  it("parses continuation identity and blocked admission state", () => {
+    const content = [
+      "---",
+      "active: true",
+      "iteration: 2",
+      "maxIterations: 10",
+      "sessionId: ses_a",
+      "loopID: loop-1",
+      "loopStartedAt: 1700000000000",
+      "lastIdleEventID: evt-1",
+      "lastIdleEventCreated: 1700000000001",
+      "continuationBlocked: true",
+      "---",
+    ].join("\n");
+
+    expect(parseState(content)).toMatchObject({
+      active: true,
+      sessionId: "ses_a",
+      loopID: "loop-1",
+      loopStartedAt: 1700000000000,
+      lastIdleEventID: "evt-1",
+      lastIdleEventCreated: 1700000000001,
+      continuationBlocked: true,
+    });
+  });
+
   it("rejects invalid known values and duplicate state fields", () => {
     expect(() => parseState("---\nactive: maybe\n---")).toThrow(MalformedStateError);
     expect(() => parseState("---\niteration: nope\n---")).toThrow(MalformedStateError);
     expect(() => parseState("---\nmaxIterations: 0\n---")).toThrow(MalformedStateError);
+    expect(() => parseState("---\nloopID: \n---")).toThrow(MalformedStateError);
+    expect(() => parseState("---\nlastIdleEventID: \n---")).toThrow(MalformedStateError);
+    expect(() => parseState("---\nlastIdleEventCreated: nope\n---")).toThrow(MalformedStateError);
+    expect(() => parseState("---\ncontinuationBlocked: maybe\n---")).toThrow(MalformedStateError);
     expect(() => parseState("---\nactive: true\nactive: false\n---")).toThrow(MalformedStateError);
   });
 
@@ -142,6 +172,11 @@ describe("parseState <-> serializeState round trip", () => {
       iteration: 12,
       maxIterations: 200,
       sessionId: "ses_xyz",
+      loopID: "loop-xyz",
+      loopStartedAt: 1700000000000,
+      lastIdleEventID: "evt-xyz",
+      lastIdleEventCreated: 1700000000001,
+      continuationBlocked: true,
       prompt: "Build a REST API with auth",
     };
     expect(parseState(serializeState(original))).toEqual(original);

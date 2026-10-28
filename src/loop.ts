@@ -1,6 +1,12 @@
+import { randomUUID } from "node:crypto";
 import { Error as ToolError } from "@opencode/plugin/promise/tool";
 import type { Plugin } from "@opencode/plugin";
 import { DEFAULT_MAX_ITERATIONS, stateStore, type StateStore } from "./state.ts";
+import {
+  abortContinuationRequests,
+  hasPendingContinuationAdmission,
+} from "./continuation-control.ts";
+import { withStateLock } from "./state-lock.ts";
 
 export const HELP_TEXT = `# Ralph Loop Help
 
@@ -15,10 +21,17 @@ export const HELP_TEXT = `# Ralph Loop Help
 1. Start with: /ralph-loop "Build a REST API"
 2. The plugin continues the initiating session when it goes idle
 3. The loop stops at \`<promise>DONE</promise>\` or the max iteration count
+4. Cancellation stops future continuations; it cannot retract a prompt already admitted by OpenCode.
 
 ## State File
 
-Located at: .opencode/ralph-loop.local.md`;
+Located at: .opencode/ralph-loop.local.md
+
+## Limits
+
+- Use one OpenCode runtime per project; concurrent processes do not share loop locks.
+- Cancellation stops future continuations but cannot retract a prompt OpenCode already admitted.
+- If a prompt admission never settles, restart OpenCode before starting another loop.`;
 
 export interface StartLoopResult {
   task: string;
@@ -52,12 +65,30 @@ export async function startLoop(
   }
 
   const directory = await getSessionDirectory(ctx, sessionID);
-  store.write(directory, {
-    active: true,
-    iteration: 0,
-    maxIterations: limit,
-    sessionId: sessionID,
-    prompt: task,
+  abortContinuationRequests(directory);
+  await withStateLock(directory, () => {
+    const current = store.read(directory);
+    if (current.pendingRequestID || current.continuationBlocked) {
+      throw new ToolError({
+        message:
+          "Cancel the blocked Ralph Loop before starting another. A prior continuation request may still be pending or have an uncertain outcome.",
+      });
+    }
+    if (hasPendingContinuationAdmission(directory)) {
+      throw new ToolError({
+        message:
+          "A Ralph Loop continuation may still be entering the session. Wait for that request to settle before starting another loop in this project.",
+      });
+    }
+    store.write(directory, {
+      active: true,
+      iteration: 0,
+      maxIterations: limit,
+      sessionId: sessionID,
+      loopID: randomUUID(),
+      loopStartedAt: Date.now(),
+      prompt: task,
+    });
   });
 
   return {
@@ -73,11 +104,16 @@ export async function cancelLoop(
   store: StateStore = stateStore,
 ): Promise<string> {
   const directory = await getSessionDirectory(ctx, sessionID);
-  const state = store.read(directory);
-  if (!state.active) return "No active Ralph Loop to cancel.";
+  abortContinuationRequests(directory, sessionID);
+  return withStateLock(directory, () => {
+    const state = store.read(directory);
+    if (!state.active || (state.sessionId !== undefined && state.sessionId !== sessionID)) {
+      return "No active Ralph Loop to cancel.";
+    }
 
-  store.clear(directory);
-  return `Ralph Loop cancelled after ${state.iteration} iteration(s).`;
+    store.clear(directory);
+    return `Ralph Loop cancelled after ${state.iteration} iteration(s).`;
+  });
 }
 
 async function getSessionDirectory(ctx: Plugin.Context, sessionID: string): Promise<string> {

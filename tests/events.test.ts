@@ -4,12 +4,15 @@ import { subscribeLoopEvents } from "../src/events.ts";
 import { type RalphState, type StateStore } from "../src/state.ts";
 
 type TestEvent = {
+  id: string;
+  created: number;
   type: "session.idle" | "session.deleted" | "session.created";
   data: { sessionID: string };
   location?: { directory: string };
 };
 
 const inactiveState: RalphState = { active: false, iteration: 0, maxIterations: 100 };
+let nextEventCreated = 0;
 
 class MemoryStateStore implements StateStore {
   readonly states = new Map<string, RalphState>();
@@ -38,8 +41,11 @@ function event(
   type: TestEvent["type"],
   sessionID: string,
   directory?: string,
+  id = `evt_${type}_${sessionID}_${directory ?? "fallback"}`,
 ): TestEvent {
   return {
+    id,
+    created: ++nextEventCreated,
     type,
     data: { sessionID },
     ...(directory ? { location: { directory } } : {}),
@@ -135,6 +141,7 @@ describe("V2 session event scoping", () => {
     expect(onIdle.mock.calls[0][0]).toMatchObject({
       sessionID: "ses_a",
       directory: projectA,
+      eventID: expect.any(String),
       state: { active: true, sessionId: "ses_a" },
     });
     expect(onIdle.mock.calls[0][1]).toBeInstanceOf(AbortSignal);
@@ -159,9 +166,16 @@ describe("V2 session event scoping", () => {
     await cleanup();
 
     expect(onIdle).toHaveBeenCalledWith(
-      { sessionID: "ses_first", directory: project, state: legacyState },
-      expect.any(AbortSignal),
+      {
+        eventID: expect.any(String),
+        created: expect.any(Number),
+        sessionID: "ses_first",
+        directory: project,
+        state: legacyState,
+      },
+      expect.anything(),
     );
+    expect(onIdle.mock.calls[0][1]).toBeInstanceOf(AbortSignal);
   });
 
   it("uses the session project when an event has no location", async () => {
@@ -185,6 +199,26 @@ describe("V2 session event scoping", () => {
 
     expect(sessionGet).toHaveBeenCalledWith({ sessionID: "ses_resolved" });
     expect(onIdle.mock.calls[0][0]).toMatchObject({ directory: project });
+  });
+
+  it("dispatches a repeated idle event ID only once", async () => {
+    const project = "C:/projects/duplicate-idle";
+    const store = new MemoryStateStore();
+    store.states.set(project, {
+      active: true,
+      iteration: 0,
+      maxIterations: 5,
+      sessionId: "ses_duplicate",
+    });
+    const duplicate = event("session.idle", "ses_duplicate", project, "evt_duplicate");
+    const { context } = createContext([duplicate, duplicate]);
+    const onIdle = vi.fn();
+    const cleanup = subscribeLoopEvents(context, { store, onIdle });
+
+    await cleanup();
+
+    expect(onIdle).toHaveBeenCalledOnce();
+    expect(onIdle.mock.calls[0][0]).toMatchObject({ eventID: "evt_duplicate" });
   });
 
   it("aborts the iterator and absorbs abort rejection during cleanup", async () => {

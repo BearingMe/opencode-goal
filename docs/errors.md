@@ -18,7 +18,7 @@ The current V1 implementation favors keeping failures out of the TUI by swallowi
 - An existing state file with missing framing, no recognized fields, duplicate fields, or invalid known values throws `MalformedStateError`; it is never treated as inactive.
 - Valid partial frontmatter remains readable with defaults for omitted fields. Windows CRLF and UTF-8 BOM are supported.
 - Write and delete failures throw `StateFileError`; deleting an absent file is idempotent. Start/cancel actions report success only after required state operations succeed.
-- Completion cleanup must use the same state operations; M7 verifies that path with the V2 state machine.
+- M7 completion and max-iteration cleanup use `StateStore.clear`; failures propagate to the event boundary and are reported.
 
 ## Rules for changes
 
@@ -27,11 +27,11 @@ The current V1 implementation favors keeping failures out of the TUI by swallowi
 - Distinguish **no state**, **state could not be read**, **task incomplete**, and **completion could not be checked**. Unknown state/API outcomes are not proof that a loop is inactive or incomplete.
 - Do not claim that a loop started, was cancelled, or completed until the required state-file operation succeeds. Treat deleting an already-absent state file as idempotent; report other delete failures.
 - If completion cannot be checked, do not automatically continue as if it were checked and incomplete. Surface a diagnostic and use a bounded, explicit recovery policy.
-- Keep iteration and session state consistent with prompt admission. A failed prompt must not silently consume an iteration or leave the loop in an unrecoverable state.
+- Persist a pending request before completion lookup and reserve the next iteration before prompt admission. A failed completion lookup is reported, clears its pending request, and consumes no iteration; a later idle event may safely repeat the read-only check. Because a rejected/interrupted prompt may have been durably admitted without its response reaching the plugin, keep the reservation and block further continuation; report the uncertain outcome and require cancel/restart rather than retrying automatically.
 - Do not retry non-idempotent prompt submissions unless duplicate admission is prevented. Any retry policy must be bounded and cancellation-aware.
 - Normalize caught values as `unknown`; preserve the cause for diagnostics. User-facing errors should say what failed and what can be tried next, without exposing prompts, secrets, stack traces, or raw provider responses.
 - Test failure paths for filesystem reads/writes/deletes, message lookup, continuation admission, and cancellation. Assert both the returned error/result and persisted state.
 
 ## Remaining V2 work
 
-Completion lookup, continuation admission, and cancellation races remain for M7. Verify those paths against the pinned `@opencode/plugin` contract; do not translate V1 catch behavior mechanically. See [`references/opencode-v2/plugin-migrate-v1.md`](../references/opencode-v2/plugin-migrate-v1.md).
+M8 must verify completion, continuation, and cancellation behavior from the packed artifact on the minimum supported OpenCode release. M9 aligns runtime documentation after that verification. See [`references/opencode-v2/plugin-migrate-v1.md`](../references/opencode-v2/plugin-migrate-v1.md).

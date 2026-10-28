@@ -34,7 +34,7 @@ describe("state failures reach tool callers", () => {
       throw failure;
     });
     const store: StateStore = {
-      read: vi.fn(),
+      read: vi.fn(() => ({ active: false, iteration: 0, maxIterations: 100 })),
       write,
       clear: vi.fn(),
     };

@@ -2,13 +2,14 @@
 
 Checkpoints record verified progress and the next useful place to resume. Milestone acceptance criteria in [`milestones.md`](milestones.md) remain the completion authority; do not mark a checkpoint complete from intention alone.
 
-**Snapshot:** 2026-10-28. M0–M6 are complete and committed. M7–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
+**Snapshot:** 2026-10-28. M0–M6 are complete and committed. M7 implementation is active and uncommitted; M8–M9 remain. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
 
 ## M0 — Confirm the V2 compatibility contract
 
 **Decisions**
 - Support is V2-only: minimum OpenCode 2.1.4 and `@opencode/plugin` 2.1.4. V1 compatibility is outside this conversion.
 - Preserve plugin ID `opencode-ralph-loop`, existing tool/command IDs, project-local state path/format, 100-iteration default, and `<promise>DONE</promise>`. Bind new loops to their initiating session; legacy state without `sessionId` can bind to the first idle session in the same project.
+- State locks and in-flight request tracking are process-local; concurrent OpenCode runtimes must not operate on the same project's Ralph state file.
 - Register commands via `ctx.command.transform` and packaged skills via `ctx.skill.transform`; check `ctx.command.list()` / `ctx.skill.list()` and skip existing IDs. Do not copy skills globally.
 - Keep state and API failures explicit per `docs/errors.md`; do not change package identity or release targets.
 
@@ -128,16 +129,23 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 
 **Decisions**
 - Preserve `<promise>DONE</promise>`, max-iteration behavior, cancellation, and initiating-session ownership as target semantics.
+- `session.context` returns active context after compaction. Detect completion only in text parts of the latest assistant message; do not treat user, reasoning, tool, or compaction-summary text as the completion signal.
+- Persist a fresh loop ID and start timestamp for new runs. OpenCode 2.1.4 event `created` values come from `Clock.currentTimeMillis`; compare timestamps only to reject strictly older events (equal millisecond timestamps are valid), and persist the last processed event ID/time and compare captured state snapshots to reject replays or replaced runs.
+- Bind legacy unowned state to the first eligible idle session before any asynchronous completion lookup, so lookup failure cannot leave it available to another session.
+- Enforce the iteration cap before completion lookup; reaching the cap clears state without another API request or continuation.
+- Use a per-project lock only for state transitions; keep V2 session API calls outside it so start/cancel/delete can update state even if a request stalls. Persist a request ID before completion lookup and retain it through prompt admission until the call settles, even after abort, to suppress overlapping idle work. An unrecognized persisted request ID fails closed; a blocked or pending loop must be cancelled before starting another. Start/cancel/delete abort matching requests before their state transition; delete also aborts by session ID before resolving an optional project location. Event cleanup aborts the subscription but does not wait indefinitely for abort-ignorant handlers. Coordination is module-local and assumes one active OpenCode runtime per project.
+- A failed completion lookup clears its pending request, consumes no iteration, and reports the error; a later idle event may repeat this read-only check.
+- Persist the increment and `continuationBlocked` before calling `session.prompt`. A rejected/interrupted admission has an uncertain outcome; keep the increment reserved and block future continuation until cancel/restart. A successful admission clears the block.
 
 **Issues**
-- Current completion lookup treats API errors as incomplete; continuation errors are swallowed after incrementing the iteration.
-- V2 `session.context` covers active context after compaction; confirm it is sufficient for completion detection.
+- Prompt admission rejection is not proof that the server did not durably enqueue the input; never roll back and automatically retry that iteration. Cancellation cannot retract a prompt OpenCode already admitted; cancel/restart prevents future loop continuations, but an admitted prompt may still run.
 
 **Thoughts**
-- Prevent duplicate continuation admission and do not retry unless duplicate submission is prevented.
+- Tests cover active context completion, compaction boundaries, context/prompt failures, persisted replay guards, iteration caps, cancellation/deletion aborts, session ownership, restart snapshots, and state cleanup.
+- `npm run typecheck` and all 83 tests pass. Final adversary review passed; the implementation commit and checkpoint closeout remain.
 
 **Current state**
-- No V2 completion or continuation logic yet. M5 and M6 dependencies are complete; M7 is ready to start. M6 uses `ctx.session.get` only as the fallback for events without `location`.
+- M7 implementation and local checks are complete; final adversary review passed. The M6 event-location fallback remains `ctx.session.get`; missing-location lookup failure is reported and cannot safely identify state to clear.
 
 ## M8 — Verify the V2 package
 

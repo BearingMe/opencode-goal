@@ -2,7 +2,7 @@
 
 ## Goal
 
-Convert the current OpenCode V1 Ralph Loop plugin to V2 while preserving its user-visible commands, loop behavior, and project-local state. The runtime is still V1; V2 references are planning input, not evidence of a completed port.
+Convert the OpenCode V1 Ralph Loop plugin to V2 while preserving its user-visible commands, loop behavior, and project-local state. Runtime status is incremental; [`checkpoints.md`](checkpoints.md) records verified progress, and V2 references are not evidence of a completed milestone by themselves.
 
 ## Planning format
 
@@ -134,10 +134,10 @@ Convert the current OpenCode V1 Ralph Loop plugin to V2 while preserving its use
 
 **Acceptance criteria**
 
-- [ ] Completion is detected from the correct assistant response and verified after compaction.
-- [ ] A session receives at most one continuation for an idle transition; unrelated or deleted sessions cannot advance or clear the loop.
-- [ ] Max-iteration, completion, and cancellation paths clear or preserve state as specified.
-- [ ] Failed completion checks or prompt admissions are visible and do not silently consume an iteration or trigger an unsafe retry.
+- [x] Completion is detected from the latest assistant text in active V2 context, including context after compaction.
+- [x] A session receives at most one continuation per idle event in the supported single-runtime scope; loop/session snapshots and event timestamps prevent stale events from advancing a restarted or unrelated loop, and deletion/cancel/start abort matching in-flight requests. New starts fail closed while a request or uncertain admission remains persisted.
+- [x] Max-iteration and completion clear through the same `StateStore`; cancellation clears only the owning session's loop.
+- [x] Completion-check failures are reported without continuing or consuming an iteration; a later idle event may retry the read-only check. Prompt admission is reserved before submission; rejection or interruption keeps the iteration reserved and blocks automatic continuation until cancel/restart.
 
 ### M8 — Verify the V2 package
 

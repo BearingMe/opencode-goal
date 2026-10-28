@@ -6,14 +6,23 @@ import {
   type RalphState,
   type StateStore,
 } from "./state.ts";
+import {
+  abortContinuationRequests,
+  abortContinuationRequestsForSession,
+} from "./continuation-control.ts";
+import { withStateLock } from "./state-lock.ts";
 
 type SessionLifecycleEvent = {
+  id: string;
+  created: number;
   type: "session.idle" | "session.deleted";
   data: { sessionID: string };
   location?: { directory: string };
 };
 
 export interface IdleLoopContext {
+  eventID: string;
+  created: number;
   sessionID: string;
   directory: string;
   state: RalphState;
@@ -23,6 +32,13 @@ export interface LoopEventOptions {
   store?: StateStore;
   onIdle?: (context: IdleLoopContext, signal: AbortSignal) => void | Promise<void>;
   onError?: (eventType: string, error: unknown) => void;
+}
+
+export class LoopEventError extends Error {
+  constructor(message: string, cause: unknown) {
+    super(message, { cause });
+    this.name = "LoopEventError";
+  }
 }
 
 export function subscribeLoopEvents(
@@ -45,17 +61,33 @@ async function consumeLoopEvents(
   store: StateStore,
   options: LoopEventOptions,
 ): Promise<void> {
+  const pendingIdleEventIDs = new Set<string>();
   try {
     for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
-      try {
-        if (event.type === "session.idle") {
-          if (!options.onIdle) continue;
-          await handleIdle(ctx, event, store, options.onIdle, controller.signal);
-        } else if (event.type === "session.deleted") {
-          await handleDeleted(ctx, event, store);
+      if (event.type === "session.idle") {
+        if (
+          !options.onIdle ||
+          pendingIdleEventIDs.has(event.id)
+        ) {
+          continue;
         }
-      } catch (error) {
-        reportError(options, event.type, error);
+        pendingIdleEventIDs.add(event.id);
+        void handleIdle(
+          ctx,
+          event,
+          store,
+          options.onIdle,
+          controller.signal,
+        )
+          .catch((error) => reportError(options, event.type, error))
+          .finally(() => pendingIdleEventIDs.delete(event.id));
+        continue;
+      }
+
+      if (event.type === "session.deleted") {
+        void handleDeleted(ctx, event, store).catch((error) =>
+          reportError(options, event.type, error),
+        );
       }
     }
   } catch (error) {
@@ -75,8 +107,19 @@ async function handleIdle(
   if (!state.active || (state.sessionId !== undefined && state.sessionId !== event.data.sessionID)) {
     return;
   }
+  if (state.lastIdleEventID === event.id) return;
+  if (state.loopStartedAt !== undefined && event.created < state.loopStartedAt) return;
+  if (
+    state.lastIdleEventCreated !== undefined &&
+    event.created < state.lastIdleEventCreated
+  ) {
+    return;
+  }
 
-  await onIdle({ sessionID: event.data.sessionID, directory, state }, signal);
+  await onIdle(
+    { eventID: event.id, created: event.created, sessionID: event.data.sessionID, directory, state },
+    signal,
+  );
 }
 
 async function handleDeleted(
@@ -84,11 +127,15 @@ async function handleDeleted(
   event: SessionLifecycleEvent & { type: "session.deleted" },
   store: StateStore,
 ): Promise<void> {
+  abortContinuationRequestsForSession(event.data.sessionID);
   const directory = await getEventSessionDirectory(ctx, event);
-  const state = store.read(directory);
-  if (!state.active || state.sessionId !== event.data.sessionID) return;
+  abortContinuationRequests(directory, event.data.sessionID);
+  await withStateLock(directory, () => {
+    const state = store.read(directory);
+    if (!state.active || state.sessionId !== event.data.sessionID) return;
 
-  store.clear(directory);
+    store.clear(directory);
+  });
 }
 
 async function getEventSessionDirectory(
@@ -111,7 +158,9 @@ function reportError(
   }
 
   const message =
-    error instanceof StateFileError || error instanceof MalformedStateError
+    error instanceof StateFileError ||
+    error instanceof MalformedStateError ||
+    error instanceof LoopEventError
       ? error.message
       : eventType === "subscription"
         ? "Ralph Loop event subscription failed."
