@@ -2,7 +2,7 @@
 
 Checkpoints record verified progress and the next useful place to resume. Milestone acceptance criteria in [`milestones.md`](milestones.md) remain the completion authority; do not mark a checkpoint complete from intention alone.
 
-**Snapshot:** 2026-10-28. M0–M5 are complete and committed. M6 implementation and checks are verified; adversary review/commit closeout is pending. M7–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
+**Snapshot:** 2026-10-28. M0–M6 are complete and committed. M7–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
 
 ## M0 — Confirm the V2 compatibility contract
 
@@ -122,7 +122,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - `npm run typecheck` and all 57 tests pass. Event names/payloads were checked against `@opencode/schema` and the event API against pinned `@opencode/plugin` 2.1.4 types.
 
 **Current state**
-- M6 implementation and checks are verified; adversary review and commit closeout are pending. Depends on M1.
+- M6 is complete in commit `b8676b6`; `npm run typecheck`, all 57 tests, and `npm pack --dry-run` pass. Adversary review passed. Post-delete lookup without event location remains explicitly unverified; failure safely leaves state untouched. Depends on M1.
 
 ## M7 — Port completion and continuation behavior
 
@@ -137,7 +137,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Prevent duplicate continuation admission and do not retry unless duplicate submission is prevented.
 
 **Current state**
-- No V2 completion or continuation logic yet. M6 uses `ctx.session.get` only as the fallback for events without `location`; M7 starts after M6 review/commit closeout.
+- No V2 completion or continuation logic yet. M5 and M6 dependencies are complete; M7 is ready to start. M6 uses `ctx.session.get` only as the fallback for events without `location`.
 
 ## M8 — Verify the V2 package
 
