@@ -2,7 +2,7 @@
 
 Checkpoints record verified progress and the next useful place to resume. Milestone acceptance criteria in [`milestones.md`](milestones.md) remain the completion authority; do not mark a checkpoint complete from intention alone.
 
-**Snapshot:** 2026-10-28. M0–M2 are complete and committed. M3 implementation and checks are verified; adversary review passed and commit closeout is pending. M4–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
+**Snapshot:** 2026-10-28. M0–M3 are complete and committed. M4–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
 
 ## M0 — Confirm the V2 compatibility contract
 
@@ -69,7 +69,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Runtime smoke: OpenCode 2.1.4 loaded the packed package. A project `/help` added after setup appeared in `/api/command` and its actual command dispatch produced the user-defined message. Plugin `/ralph-loop` dispatch wrote the invoking session ID to the state file; `/cancel-ralph` dispatch removed it.
 
 **Current state**
-- M3 acceptance tests pass (39 total); adversary review passed and commit closeout is pending.
+- M3 is complete in commit `f603c91`; `npm run typecheck`, all 39 tests, and `npm pack --dry-run` pass. Adversary review passed, including live command-dispatch smoke on OpenCode 2.1.4.
 
 ## M4 — Port skill discovery
 
