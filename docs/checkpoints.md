@@ -2,7 +2,7 @@
 
 Checkpoints record verified progress and the next useful place to resume. Milestone acceptance criteria in [`milestones.md`](milestones.md) remain the completion authority; do not mark a checkpoint complete from intention alone.
 
-**Snapshot:** 2026-10-28. M0 and M1 are complete and committed. M2–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
+**Snapshot:** 2026-10-28. M0 and M1 are complete and committed. M2 implementation and checks are verified; adversary review/commit closeout is pending. M3–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
 
 ## M0 — Confirm the V2 compatibility contract
 
@@ -40,15 +40,18 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 
 **Decisions**
 - Preserve `ralph-loop`, `cancel-ralph`, and `help` as the target tool IDs.
+- Register with `ctx.tool.transform`; use JSON Schema, V2 structured content, `Tool.Error` for invalid start input, and bind state to the invoking session.
+- Resolve state paths from `ctx.session.get({ sessionID }).location.directory`; `ctx.location.directory` describes the plugin instance and is not guaranteed to be the session's location.
 
 **Issues**
-- The V1 tools used `tool()`/Zod arguments; the current V2 entrypoint does not register tools yet. V2 uses tool transforms, JSON Schema, and structured output.
+- Filesystem failure distinctions and injected failure tests remain in M5.
 
 **Thoughts**
-- Keep state effects behind the tested tool behavior; avoid parallel command-side state implementations.
+- Start and cancel share `src/state.ts`; help is static content. M3 commands must reuse the same state operations.
+- Tests exercise the V2 registration callback with a fake editor, including a session directory different from the plugin location; start and cancel both operate in the session's project. Final installed-package behavior is covered in M8.
 
 **Current state**
-- No tool changes or V2 tool tests. Depends on M1.
+- M2 acceptance tests pass (33 total); adversary review and commit closeout are pending.
 
 ## M3 — Port slash commands
 

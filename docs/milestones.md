@@ -55,9 +55,10 @@ Convert the current OpenCode V1 Ralph Loop plugin to V2 while preserving its use
 
 **Acceptance criteria**
 
-- [ ] All three tools appear exactly once with valid V2 schemas and structured results.
-- [ ] Starting a loop persists the task and max-iteration value; cancellation and help retain their user-facing behavior.
-- [ ] Empty-input tools and invalid/missing arguments have tested behavior.
+- [x] All three tools appear exactly once with valid V2 schemas and structured results.
+- [x] Starting a loop persists the task, max-iteration value, and invoking session; cancellation and help retain their user-facing behavior.
+- [x] Empty-input tools and invalid/missing arguments have tested behavior.
+- [x] Start and cancel resolve the invoking session's project directory through `ctx.session.get({ sessionID })`, rather than assuming `ctx.location.directory` is the session location.
 
 ### M3 — Port slash commands
 
