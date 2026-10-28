@@ -16,6 +16,7 @@ npm test            # vitest run, 23 tests
 
 ## Agent docs
 
+- Runtime remains V1; treat V2 references as migration guidance until the port is implemented.
 - Read `docs/guardrails.md`; consult `docs/architecture.md`, `docs/logging.md`, and `docs/errors.md` for relevant changes.
 - Follow `docs/milestones.md` for the V2 conversion sequence.
 - Update `docs/checkpoints.md` at phase boundaries and handoffs; record verified state only.
@@ -29,7 +30,7 @@ npm test            # vitest run, 23 tests
 - `tests/` — vitest; `tests/setup.ts` sandboxes `HOME` to a tmpdir
 - `.github/workflows/release.yml` — CI + auto-publish on master
 
-## Gotchas
+## Current V1 runtime gotchas
 
 - Plugin tools MUST use `tool({ args: {...} })` from `@opencode-ai/plugin`. The raw JSON-Schema `parameters: {...}` form crashes opencode 1.14+ (`Object.entries(undefined)`). See #4.
 - `tool.schema` is re-exported zod. Use `tool.schema.string()` (function), not `tool.schema.string` (property).
@@ -39,4 +40,4 @@ npm test            # vitest run, 23 tests
 
 ## Releases
 
-Bump `version` in `package.json` → merge to master → workflow auto-publishes via OIDC trusted publishing with provenance, tags, and creates the GitHub release. Details at top of `.github/workflows/release.yml`.
+The workflow auto-publishes on master. This fork's remote and package metadata differ; verify the target and get explicit approval before version or release changes. See `docs/guardrails.md` and `.github/workflows/release.yml`.
