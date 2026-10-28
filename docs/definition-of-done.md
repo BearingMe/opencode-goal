@@ -1,6 +1,6 @@
 # Definition of Done
 
-A milestone is done only when:
+A milestone is complete only when:
 
 - [ ] All tasks and phases are complete; every milestone acceptance criterion is verified.
 - [ ] Required checks pass; any not applicable are documented with a reason.

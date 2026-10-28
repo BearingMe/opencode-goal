@@ -18,7 +18,7 @@ npm test            # vitest run
 
 - Read `docs/guardrails.md` and `docs/architecture.md` before structural or release changes; consult `docs/errors.md` / `docs/logging.md` when relevant.
 - `docs/checkpoints.md` records verified V2 migration evidence and operational limits; do not treat migration snapshots as runtime code.
-- Use `docs/definiotion-of-done.md` before marking a milestone complete.
+- Use `docs/definition-of-done.md` before marking a milestone complete.
 
 ## Layout
 
