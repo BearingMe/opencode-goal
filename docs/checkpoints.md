@@ -156,10 +156,16 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - The fork remote is `BearingMe/opencode-goal`, while package metadata identifies `charfeng1/opencode-ralph-loop`; release identity needs separate approval.
 
 **Thoughts**
-- A workspace import is not sufficient; test the npm-packed contents in a clean V2 environment.
+- Packed `opencode-ralph-loop@1.0.10` into the approved temporary directory and installed that tarball into a clean temporary project; npm resolved the declared `@opencode/plugin@2.1.4` dependency.
+- OpenCode `v2.1.4` loaded a temporary `.opencode/plugins` wrapper importing the installed package. With inherited OpenCode/Orca session variables cleared and an isolated config home, setup registered `ralph-loop`, `cancel-ralph`, and `help`; the real V2 `ctx.tool.list()` exposed them.
+- The wrapper used a real temporary OpenCode session and called registered tool `execute` handlers directly (not model-directed tool dispatch). It supplied controlled `session.idle` events and deterministic `session.context` results, and captured `session.prompt` to avoid provider execution. Incomplete work produced exactly one queued continuation and a reserved iteration; the completion marker cleared state without another prompt; a second incomplete loop advanced once and cancellation cleared state.
+- Smoke evidence: `C:\Users\gomes\AppData\Local\Temp\opencode\ralph-loop-m8-95e6bb813c774b188581f1cd8fe99ef0\project\.opencode\ralph-loop-m8-result.json`. Packed tarball SHA-256: `06A5B9E43AB0917AD34AB9700178E74CB7288DB6D9D3D4BFF58D09F1C6751C54`.
+- `opencode run --standalone --print-logs --log-level debug --model smoke-invalid/no-model ...` then failed with the expected unavailable-model error after the package smoke completed; no provider request was made.
+- The tarball contains plugin source and all three packaged skills. It was not published, and no package/release identity or target changed.
+- `npm run typecheck` and all 83 tests pass. Final adversary review passed with no material blockers. The smoke exercises packaged event logic with controlled inputs, not OpenCode's live event delivery or model-driven execution; commit closeout remains.
 
 **Current state**
-- Packed-package smoke has verified entrypoint setup, command dispatch (M3), and skill discovery (M4) on OpenCode 2.1.4. Integrated verification of M5–M7 and the final package matrix remains. Depends on M2–M7.
+- M8 packed-artifact verification and adversary review are complete; the local closeout commit remains. The smoke verifies real tool registration plus packaged continuation, completion, and cancellation logic on OpenCode 2.1.4 using controlled event/session boundaries. Depends on M2–M7.
 
 ## M9 — Align repository documentation with V2
 

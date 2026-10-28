@@ -150,9 +150,9 @@ Convert the OpenCode V1 Ralph Loop plugin to V2 while preserving its user-visibl
 
 **Acceptance criteria**
 
-- [ ] `npm run typecheck` and `npm test` pass; tests cover tool, command, state, event, completion, and failure behavior.
-- [ ] The packed package loads and works on the minimum supported V2 release.
-- [ ] No publish, push, package identity change, or release-target change occurs without explicit approval.
+- [x] `npm run typecheck` and `npm test` pass; tests cover tool, command, state, event, completion, and failure behavior.
+- [x] The packed package loads and registers tools on OpenCode 2.1.4; a controlled runtime smoke from the packed artifact verifies continuation, completion cleanup, and cancellation without provider execution.
+- [x] No publish, push, package identity change, or release-target change occurred.
 
 ### M9 — Align repository documentation with V2
 
