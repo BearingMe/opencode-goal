@@ -18,6 +18,7 @@ npm test            # vitest run, 23 tests
 
 - Read `docs/guardrails.md`; consult `docs/architecture.md`, `docs/logging.md`, and `docs/errors.md` for relevant changes.
 - Follow `docs/milestones.md` for the V2 conversion sequence.
+- Update `docs/checkpoints.md` at phase boundaries and handoffs; record verified state only.
 
 ## Layout
 
