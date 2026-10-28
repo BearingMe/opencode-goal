@@ -2,7 +2,7 @@
 
 Checkpoints record verified progress and the next useful place to resume. Milestone acceptance criteria in [`milestones.md`](milestones.md) remain the completion authority; do not mark a checkpoint complete from intention alone.
 
-**Snapshot:** 2026-10-28. M0–M3 are complete and committed. M4 implementation and checks are verified; adversary review/commit closeout is pending. M5–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
+**Snapshot:** 2026-10-28. M0–M4 are complete and committed. M5–M9 have not started. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
 
 ## M0 — Confirm the V2 compatibility contract
 
@@ -86,7 +86,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Updated `AGENTS.md` and `CONTRIBUTING.md` layout claims; the broader README/architecture V2 documentation pass remains M9.
 
 **Current state**
-- M4 checks pass (41 tests); adversary review and commit closeout are pending. Depends on M3.
+- M4 is complete in commit `cb39ea6`; `npm run typecheck`, all 41 tests, and `npm pack --dry-run` pass. Adversary review passed; packed-install smoke on OpenCode 2.1.4 discovered all three skills. Depends on M3.
 
 ## M5 — Preserve project-local loop state
 
@@ -144,7 +144,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - A workspace import is not sufficient; test the npm-packed contents in a clean V2 environment.
 
 **Current state**
-- Only the entrypoint smoke test has run; final package behavior remains unverified. Depends on M2–M7.
+- Packed-package smoke has verified entrypoint setup, command dispatch (M3), and skill discovery (M4) on OpenCode 2.1.4. Integrated verification of M5–M7 and the final package matrix remains. Depends on M2–M7.
 
 ## M9 — Align repository documentation with V2
 
@@ -152,7 +152,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Update docs only to describe behavior that is implemented and verified. Retain V1 loader rules while V1 support remains.
 
 **Issues**
-- README and CONTRIBUTING contain stale setup claims; `AGENTS.md` currently documents V1 loader constraints.
+- README and `docs/architecture.md` still contain stale V1 command/setup claims.
 
 **Thoughts**
 - Keep migration snapshots clearly separate from runtime guarantees and update `docs/architecture.md` after the port.
