@@ -2,7 +2,7 @@
 
 Checkpoints record verified progress and the next useful place to resume. Milestone acceptance criteria in [`milestones.md`](milestones.md) remain the completion authority; do not mark a checkpoint complete from intention alone.
 
-**Snapshot:** 2026-10-28. M0–M6 are complete and committed. M7 implementation is active and uncommitted; M8–M9 remain. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
+**Snapshot:** 2026-10-28. M0–M7 are complete and committed. M8–M9 remain. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
 
 ## M0 — Confirm the V2 compatibility contract
 
@@ -142,10 +142,10 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 
 **Thoughts**
 - Tests cover active context completion, compaction boundaries, context/prompt failures, persisted replay guards, iteration caps, cancellation/deletion aborts, session ownership, restart snapshots, and state cleanup.
-- `npm run typecheck` and all 83 tests pass. Final adversary review passed; the implementation commit and checkpoint closeout remain.
+- `npm run typecheck` and all 83 tests pass. Final adversary review passed with no blocking findings in the documented single-runtime scope.
 
 **Current state**
-- M7 implementation and local checks are complete; final adversary review passed. The M6 event-location fallback remains `ctx.session.get`; missing-location lookup failure is reported and cannot safely identify state to clear.
+- M7 is complete in local commit `f81b145`. The M6 event-location fallback remains `ctx.session.get`; missing-location lookup failure is reported and cannot safely identify state to clear.
 
 ## M8 — Verify the V2 package
 
