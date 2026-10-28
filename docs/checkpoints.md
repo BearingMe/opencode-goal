@@ -2,29 +2,29 @@
 
 Checkpoints record verified progress and the next useful place to resume. Milestone acceptance criteria in [`milestones.md`](milestones.md) remain the completion authority; do not mark a checkpoint complete from intention alone.
 
-**Snapshot:** 2026-10-28. The runtime is still V1. V2 research, source snapshots, migration notes, and milestones exist; no V2 implementation or V2 runtime validation has been done. All milestone acceptance checklists remain unchecked.
+**Snapshot:** 2026-10-28. The runtime migration is in progress. M0 is complete; M1–M9 are not complete. V2 validation will target OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
 
 ## M0 — Confirm the V2 compatibility contract
 
 **Decisions**
-- Preserve existing command/tool names and project-local state as migration targets; do not change fork/package identity or publish without explicit approval.
-- V2-only versus dual support, minimum versions, plugin ID, and asset strategy are not decided.
+- Support is V2-only: minimum OpenCode 2.1.4 and `@opencode/plugin` 2.1.4. V1 compatibility is outside this conversion.
+- Preserve plugin ID `opencode-ralph-loop`, existing tool/command IDs, project-local state path/format, 100-iteration default, and `<promise>DONE</promise>`. Bind new loops to their initiating session; legacy state without `sessionId` can bind to the first idle session in the same project.
+- Register commands via `ctx.command.transform` and packaged skills via `ctx.skill.transform`; check `ctx.command.list()` / `ctx.skill.list()` and skip existing IDs. Do not copy skills globally.
+- Keep state and API failures explicit per `docs/errors.md`; do not change package identity or release targets.
 
 **Issues**
-- `@opencode/plugin` compatibility and package entrypoint requirements need to be pinned to a target V2 release.
-- V1 and V2 differ in plugin, tool, event, command, and session APIs.
+- V1 and V2 differ in plugin, tool, event, command, and session APIs; this port intentionally targets V2 only.
 
 **Thoughts**
-- Re-verify the saved V2 documentation against live official docs when implementation starts.
-- Record decisions before changing `package.json` or runtime behavior.
+- V2 migration and plugin APIs were checked against official docs on 2026-10-28; the installed OpenCode runtime and matching SDK are both 2.1.4.
 
 **Current state**
-- Research is captured in `references/`; the compatibility contract itself is incomplete. M0 is not complete.
+- Compatibility contract is settled and recorded. M0 is complete; implementation has not started.
 
 ## M1 — Port the plugin package entrypoint
 
 **Decisions**
-- V2 entrypoint is planned as a `Plugin.define` plugin; SDK version and package export shape remain open.
+- V2 entrypoint is planned as a `Plugin.define` plugin with `@opencode/plugin` 2.1.4; package export shape remains open.
 
 **Issues**
 - Current default export is a V1 async function returning hooks/tools. `package.json` uses `main` and `@opencode-ai/plugin`.
@@ -33,7 +33,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Keep the no-build source-shipping approach only if the chosen V2 loader supports it.
 
 **Current state**
-- No package or entrypoint changes. Blocked on M0.
+- No package or entrypoint changes. M1 is ready to start.
 
 ## M2 — Port the three tools
 
@@ -47,7 +47,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Keep state effects behind the tested tool behavior; avoid parallel command-side state implementations.
 
 **Current state**
-- No tool changes or V2 tool tests. Blocked on M1.
+- No tool changes or V2 tool tests. Depends on M1.
 
 ## M3 — Port slash commands
 
@@ -62,21 +62,21 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Preserve argument handling and user-defined precedence; do not let command templates duplicate state transitions.
 
 **Current state**
-- No V2 command registration. Blocked on M0 and M1.
+- No V2 command registration. Depends on M1.
 
 ## M4 — Port skill discovery
 
 **Decisions**
-- Existing user-owned skill files must not be overwritten. V2 discovery versus `ctx.skill.transform` remains open.
+- Register packaged skills with `ctx.skill.transform`; check `ctx.skill.list()` and skip existing IDs.
 
 **Issues**
 - Current `setupSkills()` copies packaged skills globally only when destinations are absent and silently ignores failures.
 
 **Thoughts**
-- Test clean install, upgrade, duplicate IDs, and Windows paths before removing or retaining global copying.
+- Test clean install, duplicate IDs, and Windows paths; do not copy skills globally.
 
 **Current state**
-- No V2 skill registration/discovery changes. Blocked on M0 and M1.
+- No V2 skill registration/discovery changes. Depends on M1.
 
 ## M5 — Preserve project-local loop state
 
@@ -90,7 +90,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Implement the explicit failure distinctions and tests in `errors.md`; preserve CRLF parsing.
 
 **Current state**
-- Current V1 parser and persistence remain unchanged. No V2 state work has started; depends on M0 and M1.
+- Current V1 parser and persistence remain unchanged. No V2 state work has started; depends on M1.
 
 ## M6 — Subscribe to and scope V2 events
 
@@ -105,7 +105,7 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Treat plugin load location and event/session location as distinct until the event contract proves otherwise.
 
 **Current state**
-- Current V1 event callback remains in place. No V2 subscription or cleanup implementation; blocked on M1 and M0.
+- Current V1 event callback remains in place. No V2 subscription or cleanup implementation; depends on M1.
 
 ## M7 — Port completion and continuation behavior
 

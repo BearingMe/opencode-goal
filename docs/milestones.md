@@ -24,10 +24,10 @@ Convert the current OpenCode V1 Ralph Loop plugin to V2 while preserving its use
 
 **Acceptance criteria**
 
-- [ ] Minimum supported OpenCode V2 and plugin SDK versions are explicit.
-- [ ] V2-only versus dual-version support is explicit.
-- [ ] Existing commands, tools, state-file compatibility, completion behavior, and asset ownership are specified.
-- [ ] Publishing/package identity for this fork is treated separately; no release metadata or publishing target is changed by this milestone.
+- [x] Minimum supported versions are OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
+- [x] The package is V2-only; V1 support is outside this conversion.
+- [x] Preserve plugin ID `opencode-ralph-loop`, the three command/tool IDs, the `.opencode/ralph-loop.local.md` format/path, max-iteration default 100, and `<promise>DONE</promise>`. Bind new loops to their initiating session; allow legacy state without `sessionId` to bind to the first idle session in the same project. Scope state changes to that project. Register commands and packaged skills through V2 transforms, skipping IDs already returned by `ctx.command.list()` / `ctx.skill.list()`; never copy skills globally.
+- [x] State and API failures are explicit per [`errors.md`](errors.md). Publishing/package identity is separate; no release metadata or target changes are authorized.
 
 ### M1 — Port the plugin package entrypoint
 
@@ -72,7 +72,7 @@ Convert the current OpenCode V1 Ralph Loop plugin to V2 while preserving its use
 
 - [ ] `/ralph-loop`, `/cancel-ralph`, and `/help` work in V2 without duplicate definitions.
 - [ ] Command execution uses the tested plugin behavior rather than a second, divergent state-management path.
-- [ ] Command arguments and user-defined command precedence follow the chosen V2 contract.
+- [ ] Command arguments are preserved; registration checks `ctx.command.list()` and skips existing IDs, preserving user-defined commands.
 - [ ] Packaged command assets match the chosen runtime approach.
 
 ### M4 — Port skill discovery
@@ -81,13 +81,13 @@ Convert the current OpenCode V1 Ralph Loop plugin to V2 while preserving its use
 
 **Phases (epics)**
 
-1. **V2 discovery:** use V2 skill discovery or `ctx.skill.transform`, as decided in M0.
+1. **V2 registration:** register packaged skills with `ctx.skill.transform` as decided in M0.
 2. **Install behavior:** remove or retain global copying based on compatibility needs and test clean/upgrade installs.
 
 **Acceptance criteria**
 
 - [ ] All packaged skills are discoverable on a clean V2 install.
-- [ ] Existing user-owned skills are not overwritten or silently shadowed.
+- [ ] Registration checks `ctx.skill.list()` and skips existing IDs, preserving user-owned skills.
 - [ ] The `setupSkills()` copy behavior and packaged layout match the chosen approach.
 
 ### M5 — Preserve project-local loop state
