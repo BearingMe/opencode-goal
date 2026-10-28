@@ -2,7 +2,7 @@
 
 Checkpoints record verified progress and the next useful place to resume. Milestone acceptance criteria in [`milestones.md`](milestones.md) remain the completion authority; do not mark a checkpoint complete from intention alone.
 
-**Snapshot:** 2026-10-28. M0–M7 are complete and committed. M8–M9 remain. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
+**Snapshot:** 2026-10-28. M0–M8 are complete and committed. M9 remains. V2 validation targets OpenCode 2.1.4 and `@opencode/plugin` 2.1.4.
 
 ## M0 — Confirm the V2 compatibility contract
 
@@ -162,10 +162,10 @@ Checkpoints record verified progress and the next useful place to resume. Milest
 - Smoke evidence: `C:\Users\gomes\AppData\Local\Temp\opencode\ralph-loop-m8-95e6bb813c774b188581f1cd8fe99ef0\project\.opencode\ralph-loop-m8-result.json`. Packed tarball SHA-256: `06A5B9E43AB0917AD34AB9700178E74CB7288DB6D9D3D4BFF58D09F1C6751C54`.
 - `opencode run --standalone --print-logs --log-level debug --model smoke-invalid/no-model ...` then failed with the expected unavailable-model error after the package smoke completed; no provider request was made.
 - The tarball contains plugin source and all three packaged skills. It was not published, and no package/release identity or target changed.
-- `npm run typecheck` and all 83 tests pass. Final adversary review passed with no material blockers. The smoke exercises packaged event logic with controlled inputs, not OpenCode's live event delivery or model-driven execution; commit closeout remains.
+- `npm run typecheck` and all 83 tests pass. Final adversary review passed with no material blockers. The smoke exercises packaged event logic with controlled inputs, not OpenCode's live event delivery or model-driven execution.
 
 **Current state**
-- M8 packed-artifact verification and adversary review are complete; the local closeout commit remains. The smoke verifies real tool registration plus packaged continuation, completion, and cancellation logic on OpenCode 2.1.4 using controlled event/session boundaries. Depends on M2–M7.
+- M8 is complete in local commit `05f5ad0`; it is not pushed. The smoke verifies real tool registration plus packaged continuation, completion, and cancellation logic on OpenCode 2.1.4 using controlled event/session boundaries. Depends on M2–M7.
 
 ## M9 — Align repository documentation with V2
 
